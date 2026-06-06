@@ -870,35 +870,79 @@ async function deleteProduct(id) {
 
 // ═══════════════════════════════════════════
 // BARCODE SCANNER
+// Works regardless of which element is focused.
+// Scanners type very fast (<50ms between keys) so
+// we distinguish scanner input from human typing by speed.
 // ═══════════════════════════════════════════
 let barcodeBuffer = '';
 let barcodeTimer = null;
+let lastKeyTime = 0;
+const SCANNER_SPEED_MS = 50; // scanners type faster than this
 
 document.addEventListener('keydown', e => {
+  // Only intercept on POS tab, and only when no modal is open
   if (activeTab !== 'pos') return;
-  const active = document.activeElement;
-  if (active && active.tagName === 'INPUT' && active.id !== 'barcodeInput') return;
   if (document.querySelector('.modal-overlay:not(.hidden)')) return;
 
-  if (e.key === 'Enter' && barcodeBuffer) {
-    processBarcode(barcodeBuffer);
+  const now = Date.now();
+  const timeSinceLast = now - lastKeyTime;
+  lastKeyTime = now;
+
+  const active = document.activeElement;
+  const inOtherInput = active && active.tagName === 'INPUT' && active.id !== 'barcodeInput';
+
+  // If typing in another input (e.g. discount), only intercept if it looks
+  // like a scanner (very fast keystrokes) AND it's a digit
+  if (inOtherInput) {
+    const isScanner = timeSinceLast < SCANNER_SPEED_MS;
+    if (!isScanner) return; // human typing in a field — leave it alone
+  }
+
+  if (e.key === 'Enter') {
+    if (barcodeBuffer.length >= 3) {
+      // Prevent Enter from submitting forms or clicking buttons
+      e.preventDefault();
+      processBarcode(barcodeBuffer.trim());
+    }
     barcodeBuffer = '';
     document.getElementById('barcodeInput').value = '';
     document.getElementById('barcodeVal').classList.add('hidden');
     return;
   }
+
+  // Only accumulate printable characters
   if (e.key.length === 1) {
-    barcodeBuffer += e.key;
+    // If this keystroke is fast (scanner speed) or buffer already started, accumulate
+    if (timeSinceLast < SCANNER_SPEED_MS || barcodeBuffer.length > 0) {
+      barcodeBuffer += e.key;
+      // Mirror into the scanner bar input for visual feedback
+      document.getElementById('barcodeInput').value = barcodeBuffer;
+      document.getElementById('barcodeVal').textContent = barcodeBuffer;
+      document.getElementById('barcodeVal').classList.remove('hidden');
+    } else {
+      // Slow keystroke with empty buffer = human typing, reset
+      barcodeBuffer = e.key;
+    }
+    // Clear buffer if no Enter arrives within 300ms (incomplete scan)
     if (barcodeTimer) clearTimeout(barcodeTimer);
-    barcodeTimer = setTimeout(() => { barcodeBuffer = ''; }, 100);
+    barcodeTimer = setTimeout(() => {
+      // Only clear if it looks like an abandoned scan, not human input in barcodeInput
+      if (document.activeElement.id !== 'barcodeInput') {
+        barcodeBuffer = '';
+        document.getElementById('barcodeInput').value = '';
+        document.getElementById('barcodeVal').classList.add('hidden');
+      }
+    }, 300);
   }
 });
 
+// Manual entry via the scanner bar input (typing by hand)
 function handleBarcodeKey(e) {
   if (e.key === 'Enter') {
     const val = document.getElementById('barcodeInput').value.trim();
     if (val) {
       processBarcode(val);
+      barcodeBuffer = '';
       document.getElementById('barcodeInput').value = '';
       document.getElementById('barcodeVal').classList.add('hidden');
     }
@@ -906,13 +950,16 @@ function handleBarcodeKey(e) {
 }
 
 function handleBarcodeInput(val) {
+  // Keep barcodeBuffer in sync when user types manually in the field
+  barcodeBuffer = val;
   const bv = document.getElementById('barcodeVal');
   if (val) { bv.textContent = val; bv.classList.remove('hidden'); } else bv.classList.add('hidden');
 }
 
 function processBarcode(barcode) {
+  if (!barcode) return;
   const product = products.find(p => p.barcode === barcode);
-  if (!product) { showToast(`Product not found: ${barcode}`, 'error'); return; }
+  if (!product) { showToast(`❌ Not found: ${barcode}`, 'error'); return; }
   if ((product.stock || 0) === 0) { showToast(`Out of stock: ${product.name}`, 'error'); return; }
   addToCart(product.id);
 }
