@@ -1015,7 +1015,48 @@ function showReceipt() {
 }
 
 function closeReceiptModal() { document.getElementById('receiptModal').classList.add('hidden'); }
-function printReceipt() { window.print(); }
+
+function printReceipt() {
+  const content = document.getElementById('receiptContent').textContent;
+  const win = window.open('', '_blank', 'width=320,height=600');
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Receipt — ${settings.shopName || 'MiniMart'}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #000;
+      background: #fff;
+      padding: 12px 16px;
+      width: 300px;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media print {
+      body { padding: 0; }
+      @page { margin: 6mm; size: 80mm auto; }
+    }
+  </style>
+</head>
+<body>
+  <pre>${content}</pre>
+  <script>
+    window.onload = function() {
+      window.print();
+      window.onafterprint = function() { window.close(); };
+    };
+  <\/script>
+</body>
+</html>`);
+  win.document.close();
+}
 
 // ═══════════════════════════════════════════
 // SALES — REAL-TIME
