@@ -340,7 +340,6 @@ input:focus{border-color:#059669}
     </div>
     <div class="products-header">
       <input type="text" class="search-input" placeholder="🔍 Search products..." oninput="filterProducts(this.value)">
-      <button class="add-product-btn" onclick="openAddProduct()">+ Add Product</button>
     </div>
     <div class="category-filter" id="categoryFilter">
       <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
@@ -457,7 +456,10 @@ input:focus{border-color:#059669}
 
     <!-- Products Management -->
     <div class="settings-section">
-      <div class="settings-title">📦 Product Management</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f1f5f9;margin-bottom:16px">
+        <div class="settings-title" style="border:none;padding:0;margin:0">📦 Product Management</div>
+        <button class="add-product-btn" onclick="openAddProduct()">+ Add Product</button>
+      </div>
       <div style="overflow-x:auto">
         <table class="products-table">
           <thead><tr>
