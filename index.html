@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MiniMart POS Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/firebase/firebase-app-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase/firebase-firestore-compat.js"></script>
+<!-- ✅ Fixed: Using correct Firebase compat CDN versions -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
@@ -177,28 +178,16 @@ input:focus{border-color:#059669}
 .toast.info{background:#3b82f6}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-/* PIN LOCK OVERLAY on tab */
-.tab-pin-lock{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px}
-
 /* HIDDEN */
 .hidden{display:none!important}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;flex:1}
-
-/* DEBUG CONSOLE */
-.debug-console{position:fixed;bottom:0;right:0;width:400px;height:200px;background:#1e293b;color:#34d399;border:1px solid #059669;border-radius:8px 8px 0 0;overflow-y:auto;padding:8px;font-family:monospace;font-size:11px;z-index:10000;display:none}
-.debug-console.show{display:block}
-.debug-toggle{position:fixed;bottom:20px;right:20px;width:40px;height:40px;background:#059669;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
 </style>
 </head>
 <body>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
-
-<!-- DEBUG CONSOLE -->
-<div class="debug-console" id="debugConsole"></div>
-<div class="debug-toggle" onclick="toggleDebugConsole()">🐛</div>
 
 <!-- PIN LOCK -->
 <div class="pin-overlay hidden" id="pinOverlay">
@@ -247,36 +236,73 @@ input:focus{border-color:#059669}
     </div>
     <div class="form-group">
       <label class="form-label">Product Name *</label>
-      <input id="pName" type="text" placeholder="e.g., Coca Cola 500ml">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Category *</label>
-      <input id="pCategory" type="text" placeholder="e.g., Beverages">
+      <input id="pName" type="text" placeholder="Product name">
     </div>
     <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <input id="pCategory" type="text" placeholder="e.g. Drinks">
+      </div>
       <div class="form-group">
         <label class="form-label">Selling Price (KSh) *</label>
-        <input id="pPrice" type="number" placeholder="0.00" step="0.01">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Cost Price (KSh)</label>
-        <input id="pCost" type="number" placeholder="0.00" step="0.01">
+        <input id="pPrice" type="number" min="0" step="0.01" placeholder="0" oninput="updateProfit()">
       </div>
     </div>
-    <div id="profitDisplay" class="profit-badge hidden"></div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Stock Quantity *</label>
-        <input id="pStock" type="number" placeholder="0">
+        <label class="form-label">Cost Price (KSh)</label>
+        <input id="pCost" type="number" min="0" step="0.01" placeholder="0" oninput="updateProfit()">
       </div>
       <div class="form-group">
-        <label class="form-label">Low Stock Alert</label>
-        <input id="pLowStock" type="number" placeholder="5">
+        <label class="form-label">Stock Level *</label>
+        <input id="pStock" type="number" min="0" placeholder="0">
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Low Stock Alert Level</label>
+      <input id="pLowStock" type="number" min="0" placeholder="5">
+    </div>
+    <div class="profit-badge" id="profitBadge">Profit Margin: 0%</div>
     <div class="modal-actions">
-      <button class="btn-primary" onclick="saveProduct()">Save Product</button>
       <button class="btn-secondary" onclick="closeProductModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- CASH PAYMENT MODAL -->
+<div class="modal-overlay hidden" id="cashModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCashModal()">✕</button>
+    <div class="modal-title">💵 Cash Payment</div>
+    <div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:16px;text-align:center">
+      <div style="font-size:13px;color:#64748b">Amount Due</div>
+      <div style="font-size:28px;font-weight:800;color:#059669" id="cashDue">KSh 0</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount Given (KSh)</label>
+      <input id="cashGiven" type="number" min="0" placeholder="0" oninput="updateChange()">
+    </div>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:14px;color:#64748b;font-weight:500">Change</span>
+      <span style="font-size:20px;font-weight:800;color:#1e293b" id="changeDisplay">KSh 0</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeCashModal()">Cancel</button>
+      <button class="btn-primary" onclick="completeCashSale()" id="completeCashBtn" disabled>Complete Sale</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT MODAL -->
+<div class="modal-overlay hidden" id="receiptModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeReceiptModal()">✕</button>
+    <div class="modal-title">🧾 Receipt</div>
+    <div class="receipt" id="receiptContent"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="printReceipt()">🖨️ Print</button>
+      <button class="btn-primary" onclick="closeReceiptModal()">Done</button>
     </div>
   </div>
 </div>
@@ -290,7 +316,11 @@ input:focus{border-color:#059669}
       <div class="header-sub" id="headerSub">My Shop • TILL001</div>
     </div>
   </div>
-  <div class="header-clock" id="clock">14:07:49</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="low-stock-badge hidden" id="lowStockBadge">0 Low Stock</span>
+    <span class="low-stock-badge hidden" id="outStockBadge" style="background:#7c3aed">0 Out of Stock</span>
+    <div class="header-clock" id="clock">00:00:00</div>
+  </div>
 </div>
 
 <!-- TABS -->
@@ -300,147 +330,141 @@ input:focus{border-color:#059669}
   <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙️ Settings</div>
 </div>
 
-<!-- MAIN LAYOUT -->
-<div class="main">
-  <!-- POS PAGE -->
-  <div class="page active" id="page-pos">
-    <!-- Products Panel -->
-    <div class="products-panel">
-      <div class="scanner-bar">
-        <span class="scanner-icon">⚡</span>
-        <input id="barcodeInput" type="text" placeholder="Scanner ready — scan a barcode or type here..." onkeypress="handleBarcodeKey(event)" oninput="handleBarcodeInput(this.value)">
-        <span class="scanner-val hidden" id="barcodeVal"></span>
-      </div>
-      <div class="products-header">
-        <input class="search-input" id="searchInput" type="text" placeholder="🔍 Search products..." oninput="handleSearch(this.value)">
-        <button class="add-product-btn" onclick="openProductModal()">+ Add Product</button>
-      </div>
-      <div class="category-filter" id="categoryFilter"></div>
-      <div class="products-grid" id="productsGrid"></div>
+<!-- POS PAGE -->
+<div class="page active" id="page-pos" style="flex-direction:row">
+  <div class="products-panel">
+    <div class="scanner-bar">
+      <span class="scanner-icon">⚡</span>
+      <input type="text" id="barcodeInput" placeholder="Scanner ready — scan a barcode or type here..." onkeydown="handleBarcodeKey(event)" oninput="handleBarcodeInput(this.value)">
+      <span class="scanner-val hidden" id="barcodeVal"></span>
     </div>
-
-    <!-- Cart Panel -->
-    <div class="cart-panel">
-      <div class="cart-header">
-        <div class="cart-title">🛒 Cart <span class="cart-count" id="cartCount">0</span></div>
-        <button class="clear-cart-btn" onclick="clearCart()">Clear</button>
-      </div>
-      <div class="cart-items" id="cartItems">
-        <div class="cart-empty"><div class="icon">🛍️</div><div style="font-weight:500">Cart is empty</div><div style="font-size:12px;color:#cbd5e1">Tap products to add</div></div>
-      </div>
-      <div class="cart-footer">
-        <div class="discount-row">
-          <label class="discount-label">Discount (KSh)</label>
-          <input class="discount-input" id="discountInput" type="number" value="0" oninput="updateTotals()">
-        </div>
-        <div class="totals">
-          <div class="total-row"><span>Subtotal</span><span id="subtotalDisplay">KSh 0</span></div>
-          <div class="total-row"><span>Discount</span><span id="discountDisplay">- KSh 0</span></div>
-          <div class="total-row grand"><span>TOTAL</span><span id="totalDisplay">KSh 0</span></div>
-        </div>
-        <div class="payment-method">
-          <button class="pay-btn active" id="payBtnCash" onclick="setPayment('cash')">💵 Cash</button>
-          <button class="pay-btn" id="payBtnMpesa" onclick="setPayment('mpesa')">📱 M-Pesa</button>
-        </div>
-        <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">Checkout →</button>
+    <div class="products-header">
+      <input type="text" class="search-input" placeholder="🔍 Search products..." oninput="filterProducts(this.value)">
+      <button class="add-product-btn" onclick="openAddProduct()">+ Add Product</button>
+    </div>
+    <div class="category-filter" id="categoryFilter">
+      <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
+    </div>
+    <div class="products-grid" id="productsGrid">
+      <div class="empty-products" style="grid-column:1/-1">
+        <div class="icon">📦</div>
+        <div style="font-weight:600">Loading products...</div>
       </div>
     </div>
   </div>
 
-  <!-- REPORTS PAGE -->
-  <div class="page" id="page-reports">
-    <div class="tab-pin-lock" id="reportsLock" style="display:none">
-      <div style="font-size:48px;margin-bottom:10px">🔒</div>
-      <div style="font-weight:600;margin-bottom:6px">Reports Locked</div>
-      <div style="font-size:13px;color:#94a3b8;margin-bottom:20px">Enter PIN to view sales reports</div>
-      <button class="btn-primary" onclick="showPinLock('reports')">Unlock Reports</button>
+  <div class="cart-panel">
+    <div class="cart-header">
+      <div class="cart-title">🛒 Cart <span class="cart-count" id="cartCount">0</span></div>
+      <button class="clear-cart-btn" onclick="clearCart()">Clear</button>
     </div>
-    <div class="reports-page hidden" id="reportsContent">
-      <div class="reports-tabs">
-        <button class="report-tab active" onclick="setReportRange('today')">Today</button>
-        <button class="report-tab" onclick="setReportRange('week')">This Week</button>
-        <button class="report-tab" onclick="setReportRange('month')">This Month</button>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <div class="icon">🛍️</div>
+        <div style="font-weight:500">Cart is empty</div>
+        <div style="font-size:12px;color:#cbd5e1">Tap products to add</div>
       </div>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">Total Sales</div><div class="stat-value" id="statTotal">0</div></div>
-        <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="statCount">0</div></div>
-        <div class="stat-card"><div class="stat-label">Cash Sales</div><div class="stat-value" id="statCash">0</div></div>
-        <div class="stat-card"><div class="stat-label">M-Pesa Sales</div><div class="stat-value" id="statMpesa">0</div></div>
+    </div>
+    <div class="cart-footer">
+      <div class="discount-row">
+        <span class="discount-label">Discount (KSh)</span>
+        <input class="discount-input" type="number" min="0" id="discountInput" value="0" oninput="updateTotals()">
       </div>
-      <div class="sales-table">
-        <div style="font-weight:700;font-size:15px;margin-bottom:12px">Recent Sales</div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr>
-              <th>Time</th><th>Items</th><th>Total</th><th>Payment</th><th>Cashier</th>
-            </tr></thead>
-            <tbody id="salesTableBody"><tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No sales yet</td></tr></tbody>
-          </table>
-        </div>
+      <div class="totals">
+        <div class="total-row"><span>Subtotal</span><span id="subtotalDisplay">KSh 0</span></div>
+        <div class="total-row"><span>Discount</span><span id="discountDisplay">- KSh 0</span></div>
+        <div class="total-row grand"><span>TOTAL</span><span id="totalDisplay">KSh 0</span></div>
+      </div>
+      <div class="payment-method">
+        <button class="pay-btn active" id="payBtnCash" onclick="setPayment('cash')">💵 Cash</button>
+        <button class="pay-btn" id="payBtnMpesa" onclick="setPayment('mpesa')">📱 M-Pesa</button>
+      </div>
+      <button class="checkout-btn" onclick="checkout()" id="checkoutBtn">Checkout →</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTS PAGE -->
+<div class="page" id="page-reports">
+  <div class="reports-page">
+    <div class="reports-tabs">
+      <button class="report-tab active" onclick="loadReport('today', this)">Today</button>
+      <button class="report-tab" onclick="loadReport('week', this)">This Week</button>
+      <button class="report-tab" onclick="loadReport('month', this)">This Month</button>
+    </div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" id="statRevenue">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="statTx">0</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Sale</div><div class="stat-value" id="statAvg">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">M-Pesa Sales</div><div class="stat-value" id="statMpesa">0</div></div>
+    </div>
+    <div class="sales-table">
+      <div style="font-weight:700;font-size:15px;margin-bottom:12px">Recent Sales</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Items</th><th>Total</th><th>Payment</th><th>Cashier</th>
+          </tr></thead>
+          <tbody id="salesTableBody"><tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No sales yet</td></tr></tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- SETTINGS PAGE -->
-  <div class="page" id="page-settings">
-    <div class="tab-pin-lock" id="settingsLock" style="display:none">
-      <div style="font-size:48px;margin-bottom:10px">🔒</div>
-      <div style="font-weight:600;margin-bottom:6px">Settings Locked</div>
-      <div style="font-size:13px;color:#94a3b8;margin-bottom:20px">Enter PIN to access settings</div>
-      <button class="btn-primary" onclick="showPinLock('settings')">Unlock Settings</button>
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+  <div class="settings-page">
+    <!-- Shop Info -->
+    <div class="settings-section">
+      <div class="settings-title">🏪 Shop Information</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Shop Name</label><input id="settingShopName" placeholder="My Shop"></div>
+        <div class="form-group"><label class="form-label">Till Number</label><input id="settingTill" placeholder="TILL001"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Address</label><input id="settingAddress" placeholder="Nairobi, Kenya"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input id="settingPhone" placeholder="+254 700 000000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Admin PIN (4 digits)</label><input id="settingPin" type="password" maxlength="4" placeholder="1234"></div>
+      <div class="settings-actions">
+        <button class="save-btn" onclick="saveShopSettings()">Save Shop Settings</button>
+      </div>
     </div>
-    <div class="settings-page hidden" id="settingsContent">
-      <!-- Shop Info -->
-      <div class="settings-section">
-        <div class="settings-title">🏪 Shop Information</div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Shop Name</label><input id="settingShopName" placeholder="My Shop"></div>
-          <div class="form-group"><label class="form-label">Till Number</label><input id="settingTill" placeholder="TILL001"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Address</label><input id="settingAddress" placeholder="Nairobi, Kenya"></div>
-          <div class="form-group"><label class="form-label">Phone</label><input id="settingPhone" placeholder="+254 700 000000"></div>
-        </div>
-        <div class="form-group"><label class="form-label">Admin PIN (4 digits)</label><input id="settingPin" type="password" maxlength="4" placeholder="1234"></div>
-        <div class="settings-actions">
-          <button class="save-btn" onclick="saveShopSettings()">Save Shop Settings</button>
-        </div>
-      </div>
 
-      <!-- M-Pesa -->
-      <div class="settings-section">
-        <div class="settings-title">📱 M-Pesa (Daraja) Settings</div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Consumer Key</label><input id="settingMpesaKey" type="password" placeholder="From Daraja portal"></div>
-          <div class="form-group"><label class="form-label">Consumer Secret</label><input id="settingMpesaSecret" type="password" placeholder="From Daraja portal"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Short Code</label><input id="settingMpesaShortcode" placeholder="174379"></div>
-          <div class="form-group"><label class="form-label">Passkey</label><input id="settingMpesaPasskey" type="password" placeholder="Passkey"></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Environment</label>
-          <select id="settingMpesaEnv" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px">
-            <option value="sandbox">Sandbox (Testing)</option>
-            <option value="production">Production (Live)</option>
-          </select>
-        </div>
-        <div class="settings-actions">
-          <button class="save-btn" onclick="saveMpesaSettings()">Save M-Pesa Settings</button>
-        </div>
+    <!-- M-Pesa -->
+    <div class="settings-section">
+      <div class="settings-title">📱 M-Pesa (Daraja) Settings</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Consumer Key</label><input id="settingMpesaKey" type="password" placeholder="From Daraja portal"></div>
+        <div class="form-group"><label class="form-label">Consumer Secret</label><input id="settingMpesaSecret" type="password" placeholder="From Daraja portal"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Short Code</label><input id="settingMpesaShortcode" placeholder="174379"></div>
+        <div class="form-group"><label class="form-label">Passkey</label><input id="settingMpesaPasskey" type="password" placeholder="Passkey"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Environment</label>
+        <select id="settingMpesaEnv" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px">
+          <option value="sandbox">Sandbox (Testing)</option>
+          <option value="production">Production (Live)</option>
+        </select>
+      </div>
+      <div class="settings-actions">
+        <button class="save-btn" onclick="saveMpesaSettings()">Save M-Pesa Settings</button>
+      </div>
+    </div>
 
-      <!-- Products Management -->
-      <div class="settings-section">
-        <div class="settings-title">📦 Product Management</div>
-        <div style="overflow-x:auto">
-          <table class="products-table">
-            <thead><tr>
-              <th>Emoji</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th>
-            </tr></thead>
-            <tbody id="productsTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">No products yet</td></tr></tbody>
-          </table>
-        </div>
+    <!-- Products Management -->
+    <div class="settings-section">
+      <div class="settings-title">📦 Product Management</div>
+      <div style="overflow-x:auto">
+        <table class="products-table">
+          <thead><tr>
+            <th>Emoji</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="productsTableBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">No products yet</td></tr></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -448,7 +472,7 @@ input:focus{border-color:#059669}
 
 <script>
 // ═══════════════════════════════════════════
-// FIREBASE CONFIG — REPLACE WITH YOURS
+// ✅ FIREBASE CONFIG — YOUR CREDENTIALS
 // ═══════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyDs94_9B799yGtFEW2aBfu-QXCHv0EhjZo",
@@ -456,38 +480,17 @@ const firebaseConfig = {
   projectId: "nimart-pos",
   storageBucket: "nimart-pos.firebasestorage.app",
   messagingSenderId: "136078257616",
-  appId: "1:136078257616:web:3797fee26160c5ffb89dd5"
+  appId: "1:136078257616:web:3797fee26160c5ffb89dd5",
+  measurementId: "G-22ZWW4YRX0"
 };
 
-let db = null;
-let firebaseReady = false;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// Initialize Firebase
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-  firebaseReady = true;
-  debugLog('✅ Firebase initialized successfully');
-} catch(e) {
-  debugLog('❌ Firebase init error: ' + e.message);
-  console.error('Firebase init error:', e);
-}
-
-// ═══════════════════════════════════════════
-// DEBUG LOGGING
-// ═══════════════════════════════════════════
-function debugLog(msg) {
-  const console_el = document.getElementById('debugConsole');
-  const timestamp = new Date().toLocaleTimeString();
-  console_el.innerHTML += `[${timestamp}] ${msg}<br>`;
-  console_el.scrollTop = console_el.scrollHeight;
-  console.log(msg);
-}
-
-function toggleDebugConsole() {
-  const console_el = document.getElementById('debugConsole');
-  console_el.classList.toggle('show');
-}
+// ✅ Enable offline persistence so the app works even with brief connectivity issues
+db.enablePersistence().catch(err => {
+  console.warn('Offline persistence unavailable:', err.code);
+});
 
 // ═══════════════════════════════════════════
 // STATE
@@ -511,16 +514,10 @@ let allSales = [];
 // INIT
 // ═══════════════════════════════════════════
 async function init() {
-  debugLog('🚀 Initializing POS...');
   startClock();
   await loadSettings();
-  if (firebaseReady) {
-    listenProducts();
-    listenSales();
-  } else {
-    debugLog('⚠️ Firebase not ready - using localStorage fallback');
-    loadProductsFromStorage();
-  }
+  listenProducts();
+  listenSales();
 }
 
 function startClock() {
@@ -534,24 +531,17 @@ function startClock() {
 // ═══════════════════════════════════════════
 async function loadSettings() {
   try {
-    if (!firebaseReady) {
-      const stored = localStorage.getItem('pos_settings');
-      if (stored) settings = JSON.parse(stored);
-      debugLog('📦 Settings loaded from localStorage');
+    const doc = await db.collection('settings').doc('main').get();
+    if (doc.exists) {
+      settings = { ...settings, ...doc.data() };
     } else {
-      const doc = await db.collection('settings').doc('main').get();
-      if (doc.exists) {
-        settings = { ...settings, ...doc.data() };
-        debugLog('✅ Settings loaded from Firestore');
-      } else {
-        await db.collection('settings').doc('main').set(settings);
-        debugLog('✅ Settings created in Firestore');
-      }
+      await db.collection('settings').doc('main').set(settings);
     }
     applySettings();
   } catch(e) {
-    debugLog('❌ Settings error: ' + e.message);
     console.error('Settings error:', e);
+    // Continue with defaults if settings fail to load
+    applySettings();
   }
 }
 
@@ -577,21 +567,9 @@ async function saveShopSettings() {
   const pin = document.getElementById('settingPin').value;
   if (pin && !/^\d{4}$/.test(pin)) { showToast('PIN must be 4 digits', 'error'); return; }
   if (pin) settings.adminPin = pin;
-  
-  try {
-    if (firebaseReady) {
-      await db.collection('settings').doc('main').set(settings, { merge: true });
-      debugLog('✅ Shop settings saved to Firestore');
-    } else {
-      localStorage.setItem('pos_settings', JSON.stringify(settings));
-      debugLog('✅ Shop settings saved to localStorage');
-    }
-    applySettings();
-    showToast('Shop settings saved!', 'success');
-  } catch(e) {
-    debugLog('❌ Save settings error: ' + e.message);
-    showToast('Error saving settings', 'error');
-  }
+  await db.collection('settings').doc('main').set(settings, { merge: true });
+  applySettings();
+  showToast('Shop settings saved!', 'success');
 }
 
 async function saveMpesaSettings() {
@@ -600,182 +578,152 @@ async function saveMpesaSettings() {
   settings.mpesaShortcode = document.getElementById('settingMpesaShortcode').value;
   settings.mpesaPasskey = document.getElementById('settingMpesaPasskey').value;
   settings.mpesaEnv = document.getElementById('settingMpesaEnv').value;
-  
-  try {
-    if (firebaseReady) {
-      await db.collection('settings').doc('main').set(settings, { merge: true });
-      debugLog('✅ M-Pesa settings saved to Firestore');
-    } else {
-      localStorage.setItem('pos_settings', JSON.stringify(settings));
-      debugLog('✅ M-Pesa settings saved to localStorage');
-    }
-    showToast('M-Pesa settings saved!', 'success');
-  } catch(e) {
-    debugLog('❌ Save M-Pesa settings error: ' + e.message);
-    showToast('Error saving M-Pesa settings', 'error');
-  }
+  await db.collection('settings').doc('main').set(settings, { merge: true });
+  showToast('M-Pesa settings saved!', 'success');
 }
 
 // ═══════════════════════════════════════════
 // PRODUCTS — REAL-TIME
+// ✅ Fixed: removed dual orderBy (category + name) which requires a
+//    composite Firestore index. Now orders by name only, then sorts
+//    client-side by category so no index creation is needed.
 // ═══════════════════════════════════════════
 function listenProducts() {
-  if (!firebaseReady) {
-    debugLog('⚠️ Firebase not ready - skipping real-time listener');
-    return;
-  }
-  
-  try {
-    db.collection('products').orderBy('category').orderBy('name').onSnapshot(snap => {
-      products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      debugLog(`✅ Loaded ${products.length} products from Firestore`);
-      renderProducts();
-      renderCategoryFilter();
-      renderProductsTable();
-      updateStockAlerts();
-      saveProductsToStorage(); // Backup to localStorage
-    }, err => {
-      debugLog('❌ Products listener error: ' + err.message);
-      console.error('Products error:', err);
-      showToast('Error loading products', 'error');
-      loadProductsFromStorage(); // Fallback to localStorage
-    });
-  } catch(e) {
-    debugLog('❌ Products setup error: ' + e.message);
-    loadProductsFromStorage();
-  }
-}
-
-function loadProductsFromStorage() {
-  const stored = localStorage.getItem('pos_products');
-  if (stored) {
-    products = JSON.parse(stored);
-    debugLog(`✅ Loaded ${products.length} products from localStorage (fallback)`);
+  db.collection('products').orderBy('name').onSnapshot(snap => {
+    // ✅ Sort client-side by category then name — no composite index needed
+    products = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const catA = (a.category || '').toLowerCase();
+        const catB = (b.category || '').toLowerCase();
+        if (catA < catB) return -1;
+        if (catA > catB) return 1;
+        return (a.name || '').localeCompare(b.name || '');
+      });
     renderProducts();
     renderCategoryFilter();
     renderProductsTable();
     updateStockAlerts();
-  }
-}
-
-function saveProductsToStorage() {
-  localStorage.setItem('pos_products', JSON.stringify(products));
+  }, err => {
+    console.error('Products listener error:', err);
+    showToast('Error loading products: ' + err.message, 'error');
+  });
 }
 
 function renderProducts() {
   const grid = document.getElementById('productsGrid');
   let filtered = products;
   if (activeCategory !== 'all') filtered = filtered.filter(p => p.category === activeCategory);
-  if (searchQuery) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery) || p.barcode.includes(searchQuery));
+  if (searchQuery) filtered = filtered.filter(p =>
+    (p.name || '').toLowerCase().includes(searchQuery) ||
+    (p.barcode || '').includes(searchQuery)
+  );
 
   if (!filtered.length) {
     grid.innerHTML = `<div class="empty-products" style="grid-column:1/-1"><div class="icon">📦</div><div style="font-weight:600">${searchQuery ? 'No products found' : 'No products yet'}</div><div style="font-size:13px;color:#94a3b8">Click "+ Add Product" to add your first product</div></div>`;
-  } else {
-    grid.innerHTML = filtered.map(p => {
-      const stock = parseInt(p.stock) || 0;
-      const lowStock = parseInt(p.lowStock) || 5;
-      const outOfStock = stock === 0;
-      const isLow = stock > 0 && stock <= lowStock;
-      return `<div class="product-card ${outOfStock ? 'out-of-stock' : ''}" onclick="${outOfStock ? '' : `addToCart('${p.id}')`}">
-        <div class="product-emoji">${p.emoji || '📦'}</div>
-        <div class="product-name">${p.name}</div>
-        <div class="product-price">KSh ${parseFloat(p.price || 0).toLocaleString()}</div>
-        <div class="product-stock">
-          <span class="${isLow ? 'stock-low' : outOfStock ? 'stock-out' : ''}">
-            ${outOfStock ? 'Out of stock' : isLow ? `⚠️ ${stock} left` : `${stock} in stock`}
-          </span>
-        </div>
-      </div>`;
-    }).join('');
+    return;
   }
+  grid.innerHTML = filtered.map(p => {
+    const isOut = (p.stock || 0) === 0;
+    const isLow = !isOut && (p.stock || 0) <= (p.lowStock || 5);
+    return `<div class="product-card ${isOut ? 'out-of-stock' : ''}" onclick="${isOut ? '' : `addToCart('${p.id}')`}">
+      <div class="product-emoji">${p.emoji || '📦'}</div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-price">KSh ${parseFloat(p.price || 0).toLocaleString()}</div>
+      <div class="product-stock ${isOut ? 'stock-out' : isLow ? 'stock-low' : ''}">${isOut ? '❌ Out of stock' : isLow ? `⚠️ ${p.stock} left` : `${p.stock} in stock`}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderCategoryFilter() {
-  const cats = ['all', ...new Set(products.map(p => p.category))];
-  document.getElementById('categoryFilter').innerHTML = cats.map(cat => `
-    <button class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">
-      ${cat === 'all' ? 'All' : cat}
-    </button>
-  `).join('');
+  const cats = ['all', ...new Set(products.map(p => p.category).filter(Boolean))];
+  const filter = document.getElementById('categoryFilter');
+  filter.innerHTML = cats.map(c =>
+    `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" onclick="filterCategory('${c}', this)">${c === 'all' ? 'All' : c}</button>`
+  ).join('');
+}
+
+function filterCategory(cat, btn) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProducts();
+}
+
+function filterProducts(q) {
+  searchQuery = q.toLowerCase();
+  renderProducts();
+}
+
+function updateStockAlerts() {
+  const low = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= (p.lowStock || 5)).length;
+  const out = products.filter(p => (p.stock || 0) === 0).length;
+  const lowBadge = document.getElementById('lowStockBadge');
+  const outBadge = document.getElementById('outStockBadge');
+  if (low > 0) { lowBadge.textContent = `${low} Low Stock`; lowBadge.classList.remove('hidden'); }
+  else lowBadge.classList.add('hidden');
+  if (out > 0) { outBadge.textContent = `${out} Out of Stock`; outBadge.classList.remove('hidden'); }
+  else outBadge.classList.add('hidden');
 }
 
 function renderProductsTable() {
   const tbody = document.getElementById('productsTableBody');
   if (!products.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">No products yet</td></tr>';
-  } else {
-    tbody.innerHTML = products.map(p => `<tr>
-      <td>${p.emoji || '📦'}</td>
-      <td>${p.name}</td>
-      <td>${p.category}</td>
-      <td>KSh ${parseFloat(p.price || 0).toLocaleString()}</td>
-      <td>${p.stock}</td>
-      <td>
-        <button class="edit-btn" onclick="editProduct('${p.id}')">Edit</button>
-        <button class="del-btn" onclick="deleteProduct('${p.id}')">Delete</button>
-      </td>
-    </tr>`).join('');
+    return;
   }
-}
-
-function updateStockAlerts() {
-  const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= (p.lowStock || 5));
-  if (lowStockProducts.length > 0) {
-    debugLog(`⚠️ ${lowStockProducts.length} products have low stock`);
-  }
-}
-
-function setCategory(cat) {
-  activeCategory = cat;
-  renderCategoryFilter();
-  renderProducts();
-}
-
-function handleSearch(query) {
-  searchQuery = query.toLowerCase();
-  renderProducts();
+  tbody.innerHTML = products.map(p => `<tr>
+    <td style="font-size:20px">${p.emoji || '📦'}</td>
+    <td style="font-weight:500">${p.name}</td>
+    <td>${p.category || ''}</td>
+    <td>KSh ${parseFloat(p.price || 0).toLocaleString()}</td>
+    <td>${p.stock || 0}</td>
+    <td><button class="edit-btn" onclick="openEditProduct('${p.id}')">Edit</button><button class="del-btn" onclick="deleteProduct('${p.id}')">Delete</button></td>
+  </tr>`).join('');
 }
 
 // ═══════════════════════════════════════════
 // PRODUCT MODAL
 // ═══════════════════════════════════════════
-function openProductModal() {
+function openAddProduct() {
   editingProductId = null;
   document.getElementById('productModalTitle').textContent = 'Add New Product';
-  document.getElementById('pBarcode').value = '';
-  document.getElementById('pEmoji').value = '📦';
-  document.getElementById('pName').value = '';
-  document.getElementById('pCategory').value = '';
-  document.getElementById('pPrice').value = '';
-  document.getElementById('pCost').value = '';
-  document.getElementById('pStock').value = '';
+  ['pBarcode','pName','pCategory'].forEach(id => document.getElementById(id).value = '');
+  ['pPrice','pCost','pStock'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('pLowStock').value = '5';
-  document.getElementById('profitDisplay').classList.add('hidden');
+  document.getElementById('pEmoji').value = '📦';
+  updateProfit();
   document.getElementById('productModal').classList.remove('hidden');
-  document.getElementById('pBarcode').focus();
 }
 
-function editProduct(id) {
-  const product = products.find(p => p.id === id);
-  if (!product) return;
+function openEditProduct(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
   editingProductId = id;
   document.getElementById('productModalTitle').textContent = 'Edit Product';
-  document.getElementById('pBarcode').value = product.barcode || '';
-  document.getElementById('pEmoji').value = product.emoji || '📦';
-  document.getElementById('pName').value = product.name || '';
-  document.getElementById('pCategory').value = product.category || '';
-  document.getElementById('pPrice').value = product.price || '';
-  document.getElementById('pCost').value = product.cost || '';
-  document.getElementById('pStock').value = product.stock || '';
-  document.getElementById('pLowStock').value = product.lowStock || '5';
+  document.getElementById('pBarcode').value = p.barcode || '';
+  document.getElementById('pName').value = p.name || '';
+  document.getElementById('pCategory').value = p.category || '';
+  document.getElementById('pEmoji').value = p.emoji || '📦';
+  document.getElementById('pPrice').value = p.price || '';
+  document.getElementById('pCost').value = p.cost || '';
+  document.getElementById('pStock').value = p.stock || '';
+  document.getElementById('pLowStock').value = p.lowStock || 5;
+  updateProfit();
   document.getElementById('productModal').classList.remove('hidden');
 }
 
-function closeProductModal() {
-  document.getElementById('productModal').classList.add('hidden');
-  editingProductId = null;
+function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
+
+function updateProfit() {
+  const price = parseFloat(document.getElementById('pPrice').value) || 0;
+  const cost = parseFloat(document.getElementById('pCost').value) || 0;
+  const margin = price > 0 ? Math.round(((price - cost) / price) * 100) : 0;
+  document.getElementById('profitBadge').textContent = `Profit Margin: ${margin}%`;
 }
 
+// ✅ Fixed: saveProduct now writes stock as a number (not string),
+//    and includes proper error handling with user feedback.
 async function saveProduct() {
   const barcode = document.getElementById('pBarcode').value.trim();
   const name = document.getElementById('pName').value.trim();
@@ -788,74 +736,46 @@ async function saveProduct() {
 
   if (!barcode || !name || !category || isNaN(price) || isNaN(stock)) {
     showToast('Please fill in all required fields', 'error');
-    debugLog('❌ Validation failed: missing required fields');
     return;
   }
 
+  // ✅ stock stored as number for correct comparisons
   const data = {
-    barcode, name, category,
+    barcode,
+    name,
+    category,
     price: price.toString(),
     cost: cost.toString(),
-    stock, lowStock, emoji,
-    updatedAt: new Date().toISOString()
+    stock: Number(stock),          // ✅ number, not string
+    lowStock: Number(lowStock),    // ✅ number, not string
+    emoji,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
   try {
-    if (firebaseReady) {
-      if (editingProductId) {
-        await db.collection('products').doc(editingProductId).update(data);
-        debugLog(`✅ Product updated: ${name}`);
-        showToast('Product updated!', 'success');
-      } else {
-        data.createdAt = new Date().toISOString();
-        const ref = await db.collection('products').add(data);
-        debugLog(`✅ Product added: ${name} (ID: ${ref.id})`);
-        showToast('Product added!', 'success');
-      }
+    if (editingProductId) {
+      await db.collection('products').doc(editingProductId).update(data);
+      showToast('Product updated!', 'success');
     } else {
-      // Fallback to localStorage
-      if (editingProductId) {
-        const idx = products.findIndex(p => p.id === editingProductId);
-        if (idx >= 0) {
-          products[idx] = { ...products[idx], ...data };
-          debugLog(`✅ Product updated (localStorage): ${name}`);
-        }
-      } else {
-        const newProduct = { id: 'local_' + Date.now(), ...data };
-        products.push(newProduct);
-        debugLog(`✅ Product added (localStorage): ${name}`);
-      }
-      saveProductsToStorage();
-      renderProducts();
-      renderCategoryFilter();
-      renderProductsTable();
-      showToast(editingProductId ? 'Product updated!' : 'Product added!', 'success');
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('products').add(data);
+      showToast('Product added!', 'success');
     }
     closeProductModal();
   } catch(e) {
-    debugLog('❌ Save product error: ' + e.message);
-    console.error(e);
-    showToast('Failed to save product: ' + e.message, 'error');
+    console.error('Save product error:', e);
+    // ✅ Show the actual Firebase error message so it's easier to debug
+    showToast('Failed to save: ' + (e.message || e.code || 'unknown error'), 'error');
   }
 }
 
 async function deleteProduct(id) {
   if (!confirm('Delete this product?')) return;
   try {
-    if (firebaseReady) {
-      await db.collection('products').doc(id).delete();
-      debugLog(`✅ Product deleted: ${id}`);
-    } else {
-      products = products.filter(p => p.id !== id);
-      saveProductsToStorage();
-      renderProducts();
-      renderCategoryFilter();
-      renderProductsTable();
-    }
+    await db.collection('products').doc(id).delete();
     showToast('Product deleted', 'info');
   } catch(e) {
-    debugLog('❌ Delete product error: ' + e.message);
-    showToast('Error deleting product', 'error');
+    showToast('Failed to delete: ' + e.message, 'error');
   }
 }
 
@@ -888,7 +808,11 @@ document.addEventListener('keydown', e => {
 function handleBarcodeKey(e) {
   if (e.key === 'Enter') {
     const val = document.getElementById('barcodeInput').value.trim();
-    if (val) { processBarcode(val); document.getElementById('barcodeInput').value = ''; document.getElementById('barcodeVal').classList.add('hidden'); }
+    if (val) {
+      processBarcode(val);
+      document.getElementById('barcodeInput').value = '';
+      document.getElementById('barcodeVal').classList.add('hidden');
+    }
   }
 }
 
@@ -899,9 +823,8 @@ function handleBarcodeInput(val) {
 
 function processBarcode(barcode) {
   const product = products.find(p => p.barcode === barcode);
-  if (!product) { showToast(`Product not found: ${barcode}`, 'error'); debugLog(`❌ Barcode not found: ${barcode}`); return; }
-  if (product.stock === 0) { showToast(`Out of stock: ${product.name}`, 'error'); return; }
-  debugLog(`✅ Scanned: ${product.name}`);
+  if (!product) { showToast(`Product not found: ${barcode}`, 'error'); return; }
+  if ((product.stock || 0) === 0) { showToast(`Out of stock: ${product.name}`, 'error'); return; }
   addToCart(product.id);
 }
 
@@ -910,13 +833,20 @@ function processBarcode(barcode) {
 // ═══════════════════════════════════════════
 function addToCart(productId) {
   const product = products.find(p => p.id === productId);
-  if (!product || product.stock === 0) return;
+  if (!product || (product.stock || 0) === 0) return;
   const existing = cart.find(i => i.id === productId);
   if (existing) {
     if (existing.qty >= product.stock) { showToast('Not enough stock!', 'error'); return; }
     existing.qty++;
   } else {
-    cart.push({ id: productId, name: product.name, price: parseFloat(product.price), qty: 1, barcode: product.barcode, emoji: product.emoji || '📦' });
+    cart.push({
+      id: productId,
+      name: product.name,
+      price: parseFloat(product.price),
+      qty: 1,
+      barcode: product.barcode,
+      emoji: product.emoji || '📦'
+    });
   }
   showToast(`✓ ${product.name}`, 'success');
   renderCart();
@@ -932,7 +862,12 @@ function updateQty(id, delta) {
 
 function removeItem(id) { cart = cart.filter(i => i.id !== id); renderCart(); }
 
-function clearCart() { cart = []; discount = 0; document.getElementById('discountInput').value = 0; renderCart(); }
+function clearCart() {
+  cart = [];
+  discount = 0;
+  document.getElementById('discountInput').value = 0;
+  renderCart();
+}
 
 function renderCart() {
   const container = document.getElementById('cartItems');
@@ -970,7 +905,6 @@ function getTotal() {
   const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
   return subtotal - Math.min(parseFloat(document.getElementById('discountInput').value) || 0, subtotal);
 }
-
 function getSubtotal() { return cart.reduce((s,i) => s + i.price * i.qty, 0); }
 
 function setPayment(method) {
@@ -979,176 +913,237 @@ function setPayment(method) {
   document.getElementById('payBtnMpesa').classList.toggle('active', method === 'mpesa');
 }
 
-async function checkout() {
+function checkout() {
   if (!cart.length) { showToast('Cart is empty', 'error'); return; }
+  if (paymentMethod === 'cash') {
+    const total = getTotal();
+    document.getElementById('cashDue').textContent = `KSh ${total.toLocaleString()}`;
+    document.getElementById('cashGiven').value = '';
+    document.getElementById('changeDisplay').textContent = 'KSh 0';
+    document.getElementById('completeCashBtn').disabled = true;
+    document.getElementById('cashModal').classList.remove('hidden');
+  } else {
+    showToast('M-Pesa: Configure credentials in Settings first, then use STK Push', 'info');
+  }
+}
+
+function updateChange() {
+  const total = getTotal();
+  const given = parseFloat(document.getElementById('cashGiven').value) || 0;
+  const change = given - total;
+  document.getElementById('changeDisplay').textContent = `KSh ${Math.max(0, change).toLocaleString()}`;
+  document.getElementById('completeCashBtn').disabled = given < total;
+}
+
+function closeCashModal() { document.getElementById('cashModal').classList.add('hidden'); }
+
+async function completeCashSale() {
   const total = getTotal();
   const subtotal = getSubtotal();
-  const sale = {
-    timestamp: new Date().toISOString(),
-    items: cart.map(i => `${i.qty}x ${i.name}`).join(', '),
-    subtotal,
-    discount,
-    total,
-    paymentMethod,
-    cashier: settings.shopName || 'Cashier'
+  const given = parseFloat(document.getElementById('cashGiven').value) || 0;
+  const change = given - total;
+  const saleData = {
+    items: JSON.stringify(cart),
+    subtotal: subtotal.toString(),
+    discount: discount.toString(),
+    total: total.toString(),
+    paymentMethod: 'cash',
+    cashGiven: given.toString(),
+    change: change.toString(),
+    cashier: 'Cashier',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
   try {
-    if (firebaseReady) {
-      await db.collection('sales').add(sale);
-      debugLog(`✅ Sale recorded: KSh ${total} (${paymentMethod})`);
-    } else {
-      allSales.push(sale);
-      localStorage.setItem('pos_sales', JSON.stringify(allSales));
-      debugLog(`✅ Sale saved (localStorage): KSh ${total} (${paymentMethod})`);
-    }
-    showToast(`Sale completed! Total: KSh ${total.toLocaleString()}`, 'success');
-    clearCart();
-    lastSale = sale;
+    const ref = await db.collection('sales').add(saleData);
+
+    // ✅ Update stock using a batch write
+    const batch = db.batch();
+    cart.forEach(item => {
+      const product = products.find(p => p.id === item.id);
+      if (product) {
+        const docRef = db.collection('products').doc(item.id);
+        batch.update(docRef, { stock: Math.max(0, (product.stock || 0) - item.qty) });
+      }
+    });
+    await batch.commit();
+
+    lastSale = { id: ref.id, ...saleData, items: cart, total, subtotal, discount, cashGiven: given, change };
+    closeCashModal();
+    showReceipt();
+    cart = [];
+    discount = 0;
+    document.getElementById('discountInput').value = 0;
+    renderCart();
+    showToast('✓ Sale completed!', 'success');
   } catch(e) {
-    debugLog('❌ Checkout error: ' + e.message);
-    showToast('Error recording sale', 'error');
+    console.error('Complete sale error:', e);
+    showToast('Failed to record sale: ' + e.message, 'error');
   }
 }
 
 // ═══════════════════════════════════════════
-// SALES LISTENER
+// RECEIPT
+// ═══════════════════════════════════════════
+function showReceipt() {
+  if (!lastSale) return;
+  const date = new Date().toLocaleString('en-KE');
+  const lines = [
+    '================================',
+    `    ${settings.shopName || 'MiniMart'}`,
+    settings.shopAddress ? `    ${settings.shopAddress}` : '',
+    settings.shopPhone ? `    ${settings.shopPhone}` : '',
+    '================================',
+    `Date: ${date}`,
+    `Till: ${settings.tillNumber || 'TILL001'}`,
+    `Cashier: ${lastSale.cashier}`,
+    '--------------------------------',
+    ...lastSale.items.map(i => `${i.emoji || '📦'} ${i.name}\n   ${i.qty} x KSh ${i.price.toLocaleString()} = KSh ${(i.price * i.qty).toLocaleString()}`),
+    '--------------------------------',
+    `Subtotal:   KSh ${Number(lastSale.subtotal).toLocaleString()}`,
+    lastSale.discount > 0 ? `Discount:   - KSh ${lastSale.discount}` : '',
+    `TOTAL:      KSh ${Number(lastSale.total).toLocaleString()}`,
+    `Cash:       KSh ${lastSale.cashGiven}`,
+    `Change:     KSh ${lastSale.change}`,
+    '================================',
+    '    Thank you for shopping!',
+    '================================',
+  ].filter(Boolean).join('\n');
+  document.getElementById('receiptContent').textContent = lines;
+  document.getElementById('receiptModal').classList.remove('hidden');
+}
+
+function closeReceiptModal() { document.getElementById('receiptModal').classList.add('hidden'); }
+function printReceipt() { window.print(); }
+
+// ═══════════════════════════════════════════
+// SALES — REAL-TIME
+// ✅ Fixed: single orderBy on createdAt only (no composite index needed)
 // ═══════════════════════════════════════════
 function listenSales() {
-  if (!firebaseReady) return;
-  try {
-    db.collection('sales').orderBy('timestamp', 'desc').limit(100).onSnapshot(snap => {
-      allSales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      debugLog(`✅ Loaded ${allSales.length} sales from Firestore`);
-      renderReports();
-    }, err => {
-      debugLog('❌ Sales listener error: ' + err.message);
-      console.error('Sales error:', err);
-    });
-  } catch(e) {
-    debugLog('❌ Sales setup error: ' + e.message);
-  }
+  db.collection('sales').orderBy('createdAt', 'desc').limit(200).onSnapshot(snap => {
+    allSales = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: d.data().createdAt?.toDate() || new Date()
+    }));
+    renderReport(currentReportRange);
+  }, err => {
+    console.error('Sales listener error:', err);
+  });
 }
 
-// ═══════════════════════════════════════════
-// REPORTS
-// ═══════════════════════════════════════════
-function setReportRange(range) {
+function loadReport(range, btn) {
   currentReportRange = range;
-  document.querySelectorAll('.report-tab').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-  renderReports();
+  document.querySelectorAll('.report-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderReport(range);
 }
 
-function renderReports() {
+function renderReport(range) {
   const now = new Date();
-  let filtered = allSales;
-  
-  if (currentReportRange === 'today') {
-    filtered = allSales.filter(s => {
-      const saleDate = new Date(s.timestamp);
-      return saleDate.toDateString() === now.toDateString();
-    });
-  } else if (currentReportRange === 'week') {
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    filtered = allSales.filter(s => new Date(s.timestamp) >= weekAgo);
-  } else if (currentReportRange === 'month') {
-    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    filtered = allSales.filter(s => new Date(s.timestamp) >= monthAgo);
-  }
-  
-  const totalSales = filtered.reduce((sum, s) => sum + s.total, 0);
-  const cashSales = filtered.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0);
-  const mpesaSales = filtered.filter(s => s.paymentMethod === 'mpesa').reduce((sum, s) => sum + s.total, 0);
-  
-  document.getElementById('statTotal').textContent = `KSh ${totalSales.toLocaleString()}`;
-  document.getElementById('statCount').textContent = filtered.length;
-  document.getElementById('statCash').textContent = `KSh ${cashSales.toLocaleString()}`;
-  document.getElementById('statMpesa').textContent = `KSh ${mpesaSales.toLocaleString()}`;
-  
+  let start = new Date();
+  if (range === 'today') { start.setHours(0,0,0,0); }
+  else if (range === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+  else { start.setDate(1); start.setHours(0,0,0,0); }
+
+  const filtered = allSales.filter(s => new Date(s.createdAt) >= start);
+  const revenue = filtered.reduce((s,x) => s + parseFloat(x.total || 0), 0);
+  const mpesa = filtered.filter(s => s.paymentMethod === 'mpesa').length;
+
+  document.getElementById('statRevenue').textContent = `KSh ${revenue.toLocaleString()}`;
+  document.getElementById('statTx').textContent = filtered.length;
+  document.getElementById('statAvg').textContent = filtered.length ? `KSh ${Math.round(revenue / filtered.length).toLocaleString()}` : 'KSh 0';
+  document.getElementById('statMpesa').textContent = mpesa;
+
   const tbody = document.getElementById('salesTableBody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No sales in this period</td></tr>';
-  } else {
-    tbody.innerHTML = filtered.slice(0, 20).map(s => `<tr>
-      <td>${new Date(s.timestamp).toLocaleTimeString('en-KE')}</td>
-      <td>${s.items}</td>
-      <td>KSh ${s.total.toLocaleString()}</td>
-      <td><span class="badge-${s.paymentMethod}">${s.paymentMethod === 'cash' ? '💵 Cash' : '📱 M-Pesa'}</span></td>
-      <td>${s.cashier}</td>
-    </tr>`).join('');
+    return;
   }
+  tbody.innerHTML = filtered.slice(0,50).map(s => {
+    const items = (() => { try { return JSON.parse(s.items); } catch { return []; } })();
+    const time = s.createdAt instanceof Date ? s.createdAt.toLocaleString('en-KE') : new Date(s.createdAt).toLocaleString('en-KE');
+    return `<tr>
+      <td style="white-space:nowrap;font-size:12px">${time}</td>
+      <td>${items.length} item(s)</td>
+      <td style="font-weight:600">KSh ${parseFloat(s.total || 0).toLocaleString()}</td>
+      <td><span class="${s.paymentMethod === 'mpesa' ? 'badge-mpesa' : 'badge-cash'}">${s.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash'}</span></td>
+      <td>${s.cashier || 'Cashier'}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════
-// TAB SWITCHING & PIN LOCK
+// TAB NAVIGATION WITH PIN LOCK
 // ═══════════════════════════════════════════
+let adminUnlocked = false;
+
 function switchTab(tab) {
+  if ((tab === 'settings' || tab === 'reports') && !adminUnlocked) {
+    showPin(() => { adminUnlocked = true; switchTab(tab); });
+    return;
+  }
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`page-${tab}`).classList.add('active');
-  
-  if (tab === 'reports' || tab === 'settings') {
-    showPinLock(tab);
-  }
+  if (tab === 'pos') adminUnlocked = false;
 }
 
-function showPinLock(tab) {
-  pinCallback = tab;
+// ═══════════════════════════════════════════
+// PIN LOCK
+// ═══════════════════════════════════════════
+function showPin(callback) {
+  pinCallback = callback;
   pinValue = '';
+  updatePinDots();
   document.getElementById('pinError').classList.add('hidden');
-  document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('filled'));
   document.getElementById('pinOverlay').classList.remove('hidden');
 }
 
 function pinKey(key) {
-  if (key === 'back') {
-    pinValue = pinValue.slice(0, -1);
-  } else if (key === 'clear') {
-    pinValue = '';
-  } else {
-    if (pinValue.length < 4) pinValue += key;
-  }
-  
-  document.querySelectorAll('.pin-dot').forEach((d, i) => {
-    if (i < pinValue.length) d.classList.add('filled');
-    else d.classList.remove('filled');
-  });
-  
+  if (key === 'back') { pinValue = pinValue.slice(0, -1); }
+  else if (key === 'clear') { pinValue = ''; }
+  else if (pinValue.length < 4) { pinValue += key; }
+  updatePinDots();
   if (pinValue.length === 4) {
-    if (pinValue === settings.adminPin) {
-      document.getElementById('pinOverlay').classList.add('hidden');
-      const lock = document.getElementById(`${pinCallback}Lock`);
-      const content = document.getElementById(`${pinCallback}Content`);
-      if (lock) lock.style.display = 'none';
-      if (content) content.classList.remove('hidden');
-      debugLog(`✅ PIN verified for ${pinCallback}`);
-    } else {
-      document.getElementById('pinError').classList.remove('hidden');
-      pinValue = '';
-      document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('filled'));
-      debugLog('❌ Wrong PIN');
-    }
+    setTimeout(() => {
+      if (pinValue === (settings.adminPin || '1234')) {
+        document.getElementById('pinOverlay').classList.add('hidden');
+        if (pinCallback) pinCallback();
+      } else {
+        document.getElementById('pinError').classList.remove('hidden');
+        pinValue = '';
+        updatePinDots();
+      }
+    }, 200);
+  }
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`dot${i}`).classList.toggle('filled', i < pinValue.length);
   }
 }
 
 // ═══════════════════════════════════════════
 // TOAST
 // ═══════════════════════════════════════════
-function showToast(msg, type = 'info') {
+function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.textContent = msg;
+  toast.textContent = message;
   container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
 }
 
-// ═══════════════════════════════════════════
-// START APP
-// ═══════════════════════════════════════════
-window.addEventListener('load', init);
+init();
 </script>
-
 </body>
+</html>
