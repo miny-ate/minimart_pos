@@ -294,6 +294,71 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
   </div>
 </div>
 
+<!-- MPESA PAYMENT MODAL -->
+<div class="modal-overlay hidden" id="mpesaModal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" onclick="closeMpesaModal()">✕</button>
+    <div class="modal-title">📱 M-Pesa Payment</div>
+
+    <!-- Amount due -->
+    <div style="background:linear-gradient(135deg,#1a3a1a,#1e4a1e);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;border:1px solid #2d6a2d">
+      <div style="font-size:12px;color:#86efac;font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Amount Due</div>
+      <div style="font-size:32px;font-weight:800;color:#4ade80" id="mpesaDue">KSh 0</div>
+    </div>
+
+    <!-- Pay instructions -->
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Customer pays to:</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--muted)">Pay Bill / Till</span>
+        <span style="font-size:14px;font-weight:700;color:var(--text)" id="mpesaShortcodeDisplay">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--muted)">Account No.</span>
+        <span style="font-size:14px;font-weight:700;color:var(--text)" id="mpesaAccountDisplay">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:13px;color:var(--muted)">Amount</span>
+        <span style="font-size:14px;font-weight:700;color:#4ade80" id="mpesaAmountDisplay">KSh 0</span>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:2">
+      <div style="font-weight:700;color:var(--text);margin-bottom:6px">Customer steps:</div>
+      <div>1️⃣ Go to M-Pesa → Lipa na M-Pesa → Pay Bill</div>
+      <div>2️⃣ Enter Business No. shown above</div>
+      <div>3️⃣ Enter Account No. shown above</div>
+      <div>4️⃣ Enter exact amount shown above</div>
+      <div>5️⃣ Enter PIN and confirm</div>
+    </div>
+
+    <!-- Cashier reference input -->
+    <div class="form-group">
+      <label class="form-label">M-Pesa Reference / Confirmation Code</label>
+      <input id="mpesaRef" type="text" placeholder="e.g. QHX4B7K9LL (from customer SMS)" style="font-family:monospace;letter-spacing:1px">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Ask customer to show their M-Pesa confirmation SMS</div>
+    </div>
+
+    <!-- Confirm / Cancel -->
+    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:12px;color:#854d0e;margin-bottom:16px">
+      ⚠️ Verify the customer's M-Pesa SMS shows the correct amount before confirming.
+    </div>
+
+    <!-- 
+      ════════════════════════════════════════════
+      BACKEND HOOK — swap this button's onclick
+      with verifyMpesaWithBackend() once your
+      backend is ready. Everything else stays the same.
+      ════════════════════════════════════════════
+    -->
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeMpesaModal()">Cancel</button>
+      <button class="btn-primary" onclick="confirmMpesaSale()" id="confirmMpesaBtn">✓ Confirm Payment Received</button>
+    </div>
+  </div>
+</div>
+
 <!-- RESTOCK MODAL -->
 <div class="modal-overlay hidden" id="restockModal">
   <div class="modal" style="max-width:360px">
@@ -397,7 +462,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <!-- REPORTS PAGE -->
 <div class="page" id="page-reports">
   <div class="reports-page">
-    <!-- ✅ ADDED: Clear Reports button alongside period tabs -->
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px">
       <div class="reports-tabs" style="margin-bottom:0;gap:8px;display:flex">
         <button class="report-tab active" onclick="loadReport('today', this)">Today</button>
@@ -411,7 +475,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         onmouseout="this.style.background='#fee2e2'"
       >🗑️ Clear All Reports</button>
     </div>
-
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" id="statRevenue">KSh 0</div></div>
       <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="statTx">0</div></div>
@@ -979,7 +1042,7 @@ function checkout() {
     document.getElementById('completeCashBtn').disabled = true;
     document.getElementById('cashModal').classList.remove('hidden');
   } else {
-    showToast('M-Pesa: Configure credentials in Settings first, then use STK Push', 'info');
+    openMpesaModal();
   }
 }
 
@@ -992,6 +1055,107 @@ function updateChange() {
 }
 
 function closeCashModal() { document.getElementById('cashModal').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════
+// M-PESA MANUAL CONFIRMATION
+// ═══════════════════════════════════════════
+function openMpesaModal() {
+  const total = getTotal();
+  const shortcode = settings.mpesaShortcode || 'Not set — add in Settings';
+  const tillNo = settings.tillNumber || 'TILL001';
+
+  document.getElementById('mpesaDue').textContent = `KSh ${total.toLocaleString()}`;
+  document.getElementById('mpesaShortcodeDisplay').textContent = shortcode;
+  document.getElementById('mpesaAccountDisplay').textContent = tillNo;
+  document.getElementById('mpesaAmountDisplay').textContent = `KSh ${total.toLocaleString()}`;
+  document.getElementById('mpesaRef').value = '';
+  document.getElementById('mpesaModal').classList.remove('hidden');
+}
+
+function closeMpesaModal() { document.getElementById('mpesaModal').classList.add('hidden'); }
+
+async function confirmMpesaSale() {
+  const ref = document.getElementById('mpesaRef').value.trim();
+  if (!ref) {
+    showToast('Enter the M-Pesa confirmation code', 'error');
+    return;
+  }
+
+  const total = getTotal();
+  const subtotal = getSubtotal();
+
+  const saleData = {
+    items: JSON.stringify(cart),
+    subtotal: subtotal.toString(),
+    discount: discount.toString(),
+    total: total.toString(),
+    paymentMethod: 'mpesa',
+    mpesaRef: ref,                          // ← stored for backend verification later
+    mpesaShortcode: settings.mpesaShortcode || '',
+    cashGiven: total.toString(),
+    change: '0',
+    cashier: settings.tillNumber || 'TILL001',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    const docRef = await db.collection('sales').add(saleData);
+
+    // Deduct stock
+    const batch = db.batch();
+    cart.forEach(item => {
+      const product = products.find(p => p.id === item.id);
+      if (product) {
+        const pRef = db.collection('products').doc(item.id);
+        batch.update(pRef, { stock: Math.max(0, (product.stock || 0) - item.qty) });
+      }
+    });
+    await batch.commit();
+
+    lastSale = {
+      id: docRef.id, ...saleData,
+      items: cart, total, subtotal, discount,
+      cashGiven: total, change: 0, mpesaRef: ref
+    };
+
+    closeMpesaModal();
+    showReceipt();
+    cart = [];
+    discount = 0;
+    document.getElementById('discountInput').value = 0;
+    renderCart();
+    showToast('✓ M-Pesa sale completed!', 'success');
+  } catch(e) {
+    console.error('M-Pesa sale error:', e);
+    showToast('Failed to record sale: ' + e.message, 'error');
+  }
+}
+
+/*
+  ════════════════════════════════════════════
+  BACKEND HOOK — when you're ready to add
+  automatic verification, create this function:
+
+  async function verifyMpesaWithBackend() {
+    const ref = document.getElementById('mpesaRef').value.trim();
+    const total = getTotal();
+    const res = await fetch('https://your-backend.com/verify-mpesa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref, expectedAmount: total })
+    });
+    const data = await res.json();
+    if (data.verified) {
+      await confirmMpesaSale(); // reuse same completion logic
+    } else {
+      showToast('Payment not verified: ' + data.reason, 'error');
+    }
+  }
+
+  Then change the Confirm button's onclick to:
+  onclick="verifyMpesaWithBackend()"
+  ════════════════════════════════════════════
+*/
 
 async function completeCashSale() {
   const total = getTotal();
@@ -1052,8 +1216,12 @@ function showReceipt() {
     `Subtotal:   KSh ${Number(lastSale.subtotal).toLocaleString()}`,
     lastSale.discount > 0 ? `Discount:   - KSh ${lastSale.discount}` : '',
     `TOTAL:      KSh ${Number(lastSale.total).toLocaleString()}`,
-    `Cash:       KSh ${lastSale.cashGiven}`,
-    `Change:     KSh ${lastSale.change}`,
+    lastSale.paymentMethod === 'mpesa'
+      ? `M-Pesa Ref: ${lastSale.mpesaRef || '—'}`
+      : `Cash:       KSh ${lastSale.cashGiven}`,
+    lastSale.paymentMethod === 'mpesa'
+      ? `Change:     KSh 0`
+      : `Change:     KSh ${lastSale.change}`,
     '================================',
     '    Thank you for shopping!',
     '================================',
@@ -1145,9 +1313,6 @@ function renderReport(range) {
   }).join('');
 }
 
-// ═══════════════════════════════════════════
-// CLEAR REPORTS — PIN-protected batch delete
-// ═══════════════════════════════════════════
 function clearReportsPrompt() {
   showPin(() => {
     if (!confirm('⚠️ This will permanently delete ALL sales records from Firestore. This cannot be undone.\n\nAre you sure?')) return;
@@ -1158,7 +1323,6 @@ function clearReportsPrompt() {
 async function clearAllReports() {
   try {
     showToast('Clearing reports...', 'info');
-    // Firestore doesn't support bulk collection delete — batch-delete up to 500 at a time
     const snap = await db.collection('sales').limit(500).get();
     if (snap.empty) {
       showToast('No sales records to clear', 'info');
@@ -1167,7 +1331,6 @@ async function clearAllReports() {
     const batch = db.batch();
     snap.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
-    // If collection had more than 500 docs, recurse to get the rest
     if (snap.docs.length === 500) {
       await clearAllReports();
     } else {
