@@ -601,14 +601,26 @@ async function loadSettings() {
   try {
     const doc = await db.collection('settings').doc('main').get();
     if (doc.exists) {
-      settings = { ...settings, ...doc.data() };
-    } else {
-      await db.collection('settings').doc('main').set(settings);
+      const data = doc.data();
+
+      // Load shop settings
+      if (data.shopName) document.getElementById('shopName').value = data.shopName;
+      if (data.tillNumber) document.getElementById('tillNumber').value = data.tillNumber;
+      if (data.shopAddress) document.getElementById('shopAddress').value = data.shopAddress;
+      if (data.shopPhone) document.getElementById('shopPhone').value = data.shopPhone;
+      if (data.adminPin) document.getElementById('adminPin').value = data.adminPin;
+
+      // Load M-Pesa settings
+      if (data.mpesaKey) document.getElementById('consumerKey').value = data.mpesaKey;
+      if (data.mpesaSecret) document.getElementById('consumerSecret').value = data.mpesaSecret;
+      if (data.mpesaShortcode) document.getElementById('shortcode').value = data.mpesaShortcode;
+      if (data.mpesaPasskey) document.getElementById('passkey').value = data.mpesaPasskey;
+      if (data.mpesaEnv) document.getElementById('environment').value = data.mpesaEnv;
+
+      console.log('Settings loaded from Firestore:', data);
     }
-    applySettings();
-  } catch(e) {
-    console.error('Settings error:', e);
-    applySettings();
+  } catch (error) {
+    console.error('Error loading settings from Firestore:', error);
   }
 }
 
@@ -627,16 +639,27 @@ function applySettings() {
 }
 
 async function saveShopSettings() {
-  settings.shopName = document.getElementById('settingShopName').value;
-  settings.tillNumber = document.getElementById('settingTill').value;
-  settings.shopAddress = document.getElementById('settingAddress').value;
-  settings.shopPhone = document.getElementById('settingPhone').value;
-  const pin = document.getElementById('settingPin').value;
-  if (pin && !/^\d{4}$/.test(pin)) { showToast('PIN must be 4 digits', 'error'); return; }
-  if (pin) settings.adminPin = pin;
-  await db.collection('settings').doc('main').set(settings, { merge: true });
-  applySettings();
-  showToast('Shop settings saved!', 'success');
+  const shopName = document.getElementById('shopName').value;
+  const tillNumber = document.getElementById('tillNumber').value;
+  const shopAddress = document.getElementById('shopAddress').value;
+  const shopPhone = document.getElementById('shopPhone').value;
+  const adminPin = document.getElementById('adminPin').value;
+
+  try {
+    await db.collection('settings').doc('main').set({
+      shopName,
+      tillNumber,
+      shopAddress,
+      shopPhone,
+      adminPin,
+      lastUpdated: new Date()
+    }, { merge: true });
+
+    alert('Shop settings saved to Firestore');
+  } catch (error) {
+    console.error('Error saving shop settings:', error);
+    alert('Error saving shop settings: ' + error.message);
+  }
 }
 
 async function saveMpesaSettings() {
@@ -645,21 +668,24 @@ async function saveMpesaSettings() {
   const shortcode = document.getElementById('shortcode').value;
   const passkey = document.getElementById('passkey').value;
   const environment = document.getElementById('environment').value;
-  
+
   try {
-    await db.collection('settings').doc('main').update({
+    await db.collection('settings').doc('main').set({
       mpesaKey: consumerKey,
       mpesaSecret: consumerSecret,
       mpesaShortcode: shortcode,
       mpesaPasskey: passkey,
-      mpesaEnv: environment
-    });
+      mpesaEnv: environment,
+      lastUpdated: new Date()
+    }, { merge: true });
+
     alert('M-Pesa settings saved to Firestore');
   } catch (error) {
     console.error('Error saving M-Pesa settings:', error);
-    alert('Error saving M-Pesa settings');
+    alert('Error saving M-Pesa settings: ' + error.message);
   }
 }
+
 
 function listenProducts() {
   db.collection('products').orderBy('name').onSnapshot(snap => {
@@ -1418,6 +1444,12 @@ function showToast(message, type = 'info') {
 }
 
 init();
+
+  // Load settings when page loads
+window.addEventListener('load', () => {
+  loadSettings();
+});
+
 </script>
 </body>
 </html>
