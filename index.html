@@ -640,13 +640,25 @@ async function saveShopSettings() {
 }
 
 async function saveMpesaSettings() {
-  settings.mpesaKey = document.getElementById('settingMpesaKey').value;
-  settings.mpesaSecret = document.getElementById('settingMpesaSecret').value;
-  settings.mpesaShortcode = document.getElementById('settingMpesaShortcode').value;
-  settings.mpesaPasskey = document.getElementById('settingMpesaPasskey').value;
-  settings.mpesaEnv = document.getElementById('settingMpesaEnv').value;
-  await db.collection('settings').doc('main').set(settings, { merge: true });
-  showToast('M-Pesa settings saved!', 'success');
+  const consumerKey = document.getElementById('consumerKey').value;
+  const consumerSecret = document.getElementById('consumerSecret').value;
+  const shortcode = document.getElementById('shortcode').value;
+  const passkey = document.getElementById('passkey').value;
+  const environment = document.getElementById('environment').value;
+  
+  try {
+    await db.collection('settings').doc('main').update({
+      mpesaKey: consumerKey,
+      mpesaSecret: consumerSecret,
+      mpesaShortcode: shortcode,
+      mpesaPasskey: passkey,
+      mpesaEnv: environment
+    });
+    alert('M-Pesa settings saved to Firestore');
+  } catch (error) {
+    console.error('Error saving M-Pesa settings:', error);
+    alert('Error saving M-Pesa settings');
+  }
 }
 
 function listenProducts() {
