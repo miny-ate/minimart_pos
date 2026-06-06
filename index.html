@@ -9,22 +9,22 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ── THEME: Deep Violet + Electric Orange ── */
+/* ── THEME: Dark Black + Gold ── */
 :root{
-  --brand:#7c3aed;
-  --brand-dark:#5b21b6;
-  --brand-deep:#3b0764;
-  --accent:#f97316;
-  --accent-dark:#ea6a0a;
-  --accent-glow:rgba(249,115,22,0.35);
-  --bg:#f5f3ff;
-  --surface:#ffffff;
-  --surface2:#faf9ff;
-  --border:#ede9fe;
-  --border2:#ddd6fe;
-  --text:#1e1b4b;
-  --muted:#6b7280;
-  --muted2:#a78bfa;
+  --brand:#c9a84c;
+  --brand-dark:#a07830;
+  --brand-deep:#1a1400;
+  --accent:#e8c97a;
+  --accent-dark:#c9a84c;
+  --accent-glow:rgba(201,168,76,0.35);
+  --bg:#111008;
+  --surface:#1c1a10;
+  --surface2:#221f12;
+  --border:#2e2a18;
+  --border2:#3d3820;
+  --text:#f0e6c8;
+  --muted:#8a7d5a;
+  --muted2:#c9a84c;
 }
 
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
@@ -297,7 +297,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
     <div class="modal-title">💵 Cash Payment</div>
     <div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:16px;text-align:center">
       <div style="font-size:13px;color:#64748b">Amount Due</div>
-      <div style="font-size:28px;font-weight:800;color:#059669" id="cashDue">KSh 0</div>
+      <div style="font-size:28px;font-weight:800;color:#c9a84c" id="cashDue">KSh 0</div>
     </div>
     <div class="form-group">
       <label class="form-label">Amount Given (KSh)</label>
@@ -341,7 +341,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       <label class="form-label">Units to Add</label>
       <input id="restockQty" type="number" min="1" placeholder="e.g. 50" oninput="updateRestockPreview()">
     </div>
-    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:13px;color:#059669;font-weight:600;margin-bottom:4px" id="restockPreview">
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:13px;color:#c9a84c;font-weight:600;margin-bottom:4px" id="restockPreview">
       New stock level: —
     </div>
     <div class="modal-actions">
@@ -722,7 +722,7 @@ function renderProductsTable() {
     const stock = p.stock || 0;
     const isOut = stock === 0;
     const isLow = !isOut && stock <= (p.lowStock || 5);
-    const stockColor = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#059669';
+    const stockColor = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#c9a84c';
     const stockLabel = isOut ? `❌ ${stock}` : isLow ? `⚠️ ${stock}` : stock;
     return `<tr>
       <td style="font-size:20px">${p.emoji || '📦'}</td>
