@@ -300,13 +300,11 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
     <button class="modal-close" onclick="closeMpesaModal()">✕</button>
     <div class="modal-title">📱 M-Pesa Payment</div>
 
-    <!-- Amount due -->
     <div style="background:linear-gradient(135deg,#1a3a1a,#1e4a1e);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;border:1px solid #2d6a2d">
       <div style="font-size:12px;color:#86efac;font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Amount Due</div>
       <div style="font-size:32px;font-weight:800;color:#4ade80" id="mpesaDue">KSh 0</div>
     </div>
 
-    <!-- Pay instructions -->
     <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
       <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Customer pays to:</div>
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -323,7 +321,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
     </div>
 
-    <!-- Steps -->
     <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:2">
       <div style="font-weight:700;color:var(--text);margin-bottom:6px">Customer steps:</div>
       <div>1️⃣ Go to M-Pesa → Lipa na M-Pesa → Pay Bill</div>
@@ -333,25 +330,16 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       <div>5️⃣ Enter PIN and confirm</div>
     </div>
 
-    <!-- Cashier reference input -->
     <div class="form-group">
       <label class="form-label">M-Pesa Reference / Confirmation Code</label>
       <input id="mpesaRef" type="text" placeholder="e.g. QHX4B7K9LL (from customer SMS)" style="font-family:monospace;letter-spacing:1px">
       <div style="font-size:11px;color:var(--muted);margin-top:4px">Ask customer to show their M-Pesa confirmation SMS</div>
     </div>
 
-    <!-- Confirm / Cancel -->
     <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:12px;color:#854d0e;margin-bottom:16px">
       ⚠️ Verify the customer's M-Pesa SMS shows the correct amount before confirming.
     </div>
 
-    <!-- 
-      ════════════════════════════════════════════
-      BACKEND HOOK — swap this button's onclick
-      with verifyMpesaWithBackend() once your
-      backend is ready. Everything else stays the same.
-      ════════════════════════════════════════════
-    -->
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeMpesaModal()">Cancel</button>
       <button class="btn-primary" onclick="confirmMpesaSale()" id="confirmMpesaBtn">✓ Confirm Payment Received</button>
@@ -597,33 +585,25 @@ function startClock() {
   }, 1000);
 }
 
+// ─── FIXED: loadSettings now reads from Firestore and calls applySettings() ───
 async function loadSettings() {
   try {
     const doc = await db.collection('settings').doc('main').get();
     if (doc.exists) {
       const data = doc.data();
-
-      // Load shop settings
-      if (data.shopName) document.getElementById('shopName').value = data.shopName;
-      if (data.tillNumber) document.getElementById('tillNumber').value = data.tillNumber;
-      if (data.shopAddress) document.getElementById('shopAddress').value = data.shopAddress;
-      if (data.shopPhone) document.getElementById('shopPhone').value = data.shopPhone;
-      if (data.adminPin) document.getElementById('adminPin').value = data.adminPin;
-
-      // Load M-Pesa settings
-      if (data.mpesaKey) document.getElementById('consumerKey').value = data.mpesaKey;
-      if (data.mpesaSecret) document.getElementById('consumerSecret').value = data.mpesaSecret;
-      if (data.mpesaShortcode) document.getElementById('shortcode').value = data.mpesaShortcode;
-      if (data.mpesaPasskey) document.getElementById('passkey').value = data.mpesaPasskey;
-      if (data.mpesaEnv) document.getElementById('environment').value = data.mpesaEnv;
-
+      // Merge saved data into the settings object
+      settings = { ...settings, ...data };
       console.log('Settings loaded from Firestore:', data);
     }
+    // Always apply (uses defaults if nothing saved yet)
+    applySettings();
   } catch (error) {
     console.error('Error loading settings from Firestore:', error);
+    applySettings();
   }
 }
 
+// applySettings() is the single place that writes values into the UI fields
 function applySettings() {
   document.getElementById('headerSub').textContent = `${settings.shopName || 'My Shop'} • ${settings.tillNumber || 'TILL001'}`;
   document.getElementById('settingShopName').value = settings.shopName || '';
@@ -638,54 +618,51 @@ function applySettings() {
   document.getElementById('settingMpesaEnv').value = settings.mpesaEnv || 'sandbox';
 }
 
+// ─── FIXED: saveShopSettings now reads from the correct element IDs ───
 async function saveShopSettings() {
-  const shopName = document.getElementById('shopName').value;
-  const tillNumber = document.getElementById('tillNumber').value;
-  const shopAddress = document.getElementById('shopAddress').value;
-  const shopPhone = document.getElementById('shopPhone').value;
-  const adminPin = document.getElementById('adminPin').value;
+  const shopName    = document.getElementById('settingShopName').value;
+  const tillNumber  = document.getElementById('settingTill').value;
+  const shopAddress = document.getElementById('settingAddress').value;
+  const shopPhone   = document.getElementById('settingPhone').value;
+  const adminPin    = document.getElementById('settingPin').value;
+
+  // Keep settings object in sync so PIN check works immediately
+  settings = { ...settings, shopName, tillNumber, shopAddress, shopPhone, adminPin };
+  applySettings();
 
   try {
-    await db.collection('settings').doc('main').set({
-      shopName,
-      tillNumber,
-      shopAddress,
-      shopPhone,
-      adminPin,
-      lastUpdated: new Date()
-    }, { merge: true });
-
-    alert('Shop settings saved to Firestore');
+    await db.collection('settings').doc('main').set(
+      { shopName, tillNumber, shopAddress, shopPhone, adminPin, lastUpdated: new Date() },
+      { merge: true }
+    );
+    showToast('✓ Shop settings saved!', 'success');
   } catch (error) {
     console.error('Error saving shop settings:', error);
-    alert('Error saving shop settings: ' + error.message);
+    showToast('Error saving: ' + error.message, 'error');
   }
 }
 
+// ─── FIXED: saveMpesaSettings now reads from the correct element IDs ───
 async function saveMpesaSettings() {
-  const consumerKey = document.getElementById('consumerKey').value;
-  const consumerSecret = document.getElementById('consumerSecret').value;
-  const shortcode = document.getElementById('shortcode').value;
-  const passkey = document.getElementById('passkey').value;
-  const environment = document.getElementById('environment').value;
+  const mpesaKey      = document.getElementById('settingMpesaKey').value;
+  const mpesaSecret   = document.getElementById('settingMpesaSecret').value;
+  const mpesaShortcode= document.getElementById('settingMpesaShortcode').value;
+  const mpesaPasskey  = document.getElementById('settingMpesaPasskey').value;
+  const mpesaEnv      = document.getElementById('settingMpesaEnv').value;
+
+  settings = { ...settings, mpesaKey, mpesaSecret, mpesaShortcode, mpesaPasskey, mpesaEnv };
 
   try {
-    await db.collection('settings').doc('main').set({
-      mpesaKey: consumerKey,
-      mpesaSecret: consumerSecret,
-      mpesaShortcode: shortcode,
-      mpesaPasskey: passkey,
-      mpesaEnv: environment,
-      lastUpdated: new Date()
-    }, { merge: true });
-
-    alert('M-Pesa settings saved to Firestore');
+    await db.collection('settings').doc('main').set(
+      { mpesaKey, mpesaSecret, mpesaShortcode, mpesaPasskey, mpesaEnv, lastUpdated: new Date() },
+      { merge: true }
+    );
+    showToast('✓ M-Pesa settings saved!', 'success');
   } catch (error) {
     console.error('Error saving M-Pesa settings:', error);
-    alert('Error saving M-Pesa settings: ' + error.message);
+    showToast('Error saving: ' + error.message, 'error');
   }
 }
-
 
 function listenProducts() {
   db.collection('products').orderBy('name').onSnapshot(snap => {
@@ -1094,9 +1071,6 @@ function updateChange() {
 
 function closeCashModal() { document.getElementById('cashModal').classList.add('hidden'); }
 
-// ═══════════════════════════════════════════
-// M-PESA MANUAL CONFIRMATION
-// ═══════════════════════════════════════════
 function openMpesaModal() {
   const total = getTotal();
   const shortcode = settings.mpesaShortcode || 'Not set — add in Settings';
@@ -1128,7 +1102,7 @@ async function confirmMpesaSale() {
     discount: discount.toString(),
     total: total.toString(),
     paymentMethod: 'mpesa',
-    mpesaRef: ref,                          // ← stored for backend verification later
+    mpesaRef: ref,
     mpesaShortcode: settings.mpesaShortcode || '',
     cashGiven: total.toString(),
     change: '0',
@@ -1139,7 +1113,6 @@ async function confirmMpesaSale() {
   try {
     const docRef = await db.collection('sales').add(saleData);
 
-    // Deduct stock
     const batch = db.batch();
     cart.forEach(item => {
       const product = products.find(p => p.id === item.id);
@@ -1168,32 +1141,6 @@ async function confirmMpesaSale() {
     showToast('Failed to record sale: ' + e.message, 'error');
   }
 }
-
-/*
-  ════════════════════════════════════════════
-  BACKEND HOOK — when you're ready to add
-  automatic verification, create this function:
-
-  async function verifyMpesaWithBackend() {
-    const ref = document.getElementById('mpesaRef').value.trim();
-    const total = getTotal();
-    const res = await fetch('https://your-backend.com/verify-mpesa', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref, expectedAmount: total })
-    });
-    const data = await res.json();
-    if (data.verified) {
-      await confirmMpesaSale(); // reuse same completion logic
-    } else {
-      showToast('Payment not verified: ' + data.reason, 'error');
-    }
-  }
-
-  Then change the Confirm button's onclick to:
-  onclick="verifyMpesaWithBackend()"
-  ════════════════════════════════════════════
-*/
 
 async function completeCashSale() {
   const total = getTotal();
@@ -1444,12 +1391,6 @@ function showToast(message, type = 'info') {
 }
 
 init();
-
-  // Load settings when page loads
-window.addEventListener('load', () => {
-  loadSettings();
-});
-
 </script>
 </body>
 </html>
