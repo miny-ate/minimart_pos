@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MiniMart POS Pro</title>
-<!-- ✅ Fixed: Using correct Firebase compat CDN versions -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ── THEME: Dark Black + Gold ── */
 :root{
   --brand:#c9a84c;
   --brand-dark:#a07830;
@@ -26,7 +24,6 @@
   --muted:#8a7d5a;
   --muted2:#c9a84c;
 }
-
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
 body{background:var(--bg);min-height:100vh;color:var(--text)}
 button{cursor:pointer;border:none;outline:none}
@@ -34,8 +31,6 @@ input{outline:none;border:1px solid var(--border2);border-radius:8px;padding:8px
 input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12)}
 select{outline:none;border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:14px;width:100%;color:var(--text);background:var(--surface)}
 select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12)}
-
-/* HEADER */
 .header{background:linear-gradient(135deg,var(--brand-deep) 0%,var(--brand-dark) 50%,var(--brand) 100%);color:white;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 24px rgba(91,33,182,0.4)}
 .header-left{display:flex;align-items:center;gap:12px}
 .header-logo{background:rgba(255,255,255,0.15);padding:8px;border-radius:12px;font-size:22px;border:1px solid rgba(255,255,255,0.2)}
@@ -43,14 +38,10 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .header-sub{font-size:12px;opacity:0.75;margin-top:2px}
 .header-clock{background:rgba(255,255,255,0.12);padding:6px 14px;border-radius:8px;font-family:monospace;font-size:14px;border:1px solid rgba(255,255,255,0.15)}
 .low-stock-badge{background:#ef4444;color:white;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
-
-/* TABS */
 .tabs{display:flex;background:var(--surface);border-bottom:2px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 .tab{flex:1;padding:14px;text-align:center;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;margin-bottom:-2px;background:var(--surface)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%);box-shadow:inset 0 -3px 0 var(--accent)}
 .tab:hover{color:var(--brand);background:var(--surface2)}
-
-/* PRODUCTS PANEL */
 .products-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .scanner-bar{background:linear-gradient(90deg,var(--brand-deep),var(--brand-dark));padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent)}
 .scanner-bar input{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:white;font-family:monospace}
@@ -58,17 +49,14 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .scanner-bar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
 .scanner-icon{color:var(--accent);font-size:20px}
 .scanner-val{color:var(--accent);font-family:monospace;font-size:13px;background:rgba(249,115,22,0.15);padding:4px 10px;border-radius:6px;white-space:nowrap;border:1px solid rgba(249,115,22,0.3)}
-
 .products-header{padding:12px 16px;display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--border)}
 .search-input{flex:1}
 .add-product-btn{background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:white;padding:8px 16px;border-radius:8px;font-weight:600;font-size:14px;white-space:nowrap;transition:all 0.2s;box-shadow:0 2px 8px rgba(124,58,237,0.3)}
 .add-product-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,0.45)}
-
 .category-filter{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border)}
 .cat-btn{padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--muted);white-space:nowrap;cursor:pointer;transition:all 0.2s}
 .cat-btn.active{background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:white;border-color:var(--brand);box-shadow:0 2px 8px rgba(124,58,237,0.3)}
 .cat-btn:hover{border-color:var(--brand);color:var(--brand);background:#f5f3ff}
-
 .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px;overflow-y:auto;flex:1}
 .product-card{background:var(--surface);border-radius:14px;padding:14px;cursor:pointer;transition:all 0.15s;border:2px solid transparent;box-shadow:0 1px 4px rgba(124,58,237,0.08)}
 .product-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,115,22,0.2)}
@@ -81,15 +69,12 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .stock-out{color:#ef4444}
 .empty-products{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--muted2);gap:10px;padding:40px}
 .empty-products .icon{font-size:48px}
-
-/* CART */
 .cart-panel{width:320px;background:var(--surface);display:flex;flex-direction:column;border-left:2px solid var(--border);box-shadow:-4px 0 24px rgba(124,58,237,0.1)}
 .cart-header{background:linear-gradient(135deg,var(--brand-deep),var(--brand-dark));color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
 .cart-title{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
 .cart-count{background:var(--accent);color:white;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;box-shadow:0 2px 6px var(--accent-glow)}
 .clear-cart-btn{background:rgba(255,255,255,0.1);color:white;padding:4px 10px;border-radius:6px;font-size:12px;transition:background 0.2s;border:1px solid rgba(255,255,255,0.15)}
 .clear-cart-btn:hover{background:rgba(255,255,255,0.2)}
-
 .cart-items{flex:1;overflow-y:auto;padding:10px}
 .cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted2);gap:8px}
 .cart-empty .icon{font-size:40px}
@@ -103,7 +88,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .qty-display{width:26px;text-align:center;font-weight:700;font-size:14px;color:var(--text)}
 .remove-item-btn{color:#ef4444;background:none;font-size:16px;padding:2px 4px}
 .remove-item-btn:hover{color:#dc2626}
-
 .cart-footer{padding:12px 14px;border-top:2px solid var(--border);background:var(--surface2)}
 .discount-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .discount-label{font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap}
@@ -117,8 +101,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .checkout-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:white;border-radius:10px;font-size:15px;font-weight:700;transition:all 0.2s;box-shadow:0 4px 14px var(--accent-glow)}
 .checkout-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px var(--accent-glow)}
 .checkout-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(30,27,74,0.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px;backdrop-filter:blur(2px)}
 .modal{background:var(--surface);border-radius:18px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(91,33,182,0.25);border:1px solid var(--border)}
 .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;color:var(--text)}
@@ -135,16 +117,12 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .btn-secondary:hover{background:var(--border)}
 .btn-danger{padding:10px 16px;background:#fee2e2;color:#ef4444;border-radius:8px;font-weight:600;font-size:14px}
 .btn-danger:hover{background:#fecaca}
-
-/* SETTINGS PAGE */
 .settings-page{padding:20px;overflow-y:auto;flex:1;background:var(--bg)}
 .settings-section{background:var(--surface);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(124,58,237,0.08);border:1px solid var(--border)}
 .settings-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text);padding-bottom:10px;border-bottom:1px solid var(--border)}
 .settings-actions{display:flex;gap:10px;margin-top:16px}
 .save-btn{padding:10px 20px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:white;border-radius:8px;font-weight:600;font-size:14px;transition:all 0.2s;box-shadow:0 2px 8px rgba(124,58,237,0.3)}
 .save-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,0.4)}
-
-/* PRODUCTS MANAGEMENT TABLE */
 .products-table{width:100%;border-collapse:collapse;font-size:13px}
 .products-table th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--muted);font-weight:600}
 .products-table td{padding:8px;border-bottom:1px solid var(--border);vertical-align:middle}
@@ -155,10 +133,8 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .del-btn:hover{background:#fecaca}
 .restock-btn{background:#fff7ed;color:var(--accent-dark);padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;margin-right:4px;border:1px solid #fed7aa}
 .restock-btn:hover{background:#ffedd5}
-
-/* REPORTS */
 .reports-page{padding:20px;overflow-y:auto;flex:1;background:var(--bg)}
-.reports-tabs{display:flex;gap:8px;margin-bottom:20px}
+.reports-tabs{display:flex;background:var(--surface);border-bottom:2px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 .report-tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--border2);background:var(--surface);color:var(--muted);cursor:pointer;transition:all 0.2s}
 .report-tab.active{background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:white;border-color:var(--brand);box-shadow:0 2px 8px rgba(124,58,237,0.3)}
 .report-tab:hover{border-color:var(--brand);color:var(--brand)}
@@ -173,8 +149,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .sales-table td{padding:8px;border-bottom:1px solid var(--border)}
 .badge-cash{background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .badge-mpesa{background:#ede9fe;color:var(--brand);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
-
-/* PIN LOCK */
 .pin-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-deep) 0%,var(--brand-dark) 60%,#6d28d9 100%);display:flex;align-items:center;justify-content:center;z-index:500}
 .pin-card{background:var(--surface);border-radius:24px;padding:32px;width:300px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);border:1px solid var(--border)}
 .pin-title{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text)}
@@ -186,19 +160,13 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .pin-key{padding:14px;border-radius:12px;font-size:18px;font-weight:700;background:var(--bg);color:var(--text);border:1px solid var(--border2);transition:all 0.15s}
 .pin-key:hover{background:var(--brand);color:white;border-color:var(--brand);box-shadow:0 4px 12px rgba(124,58,237,0.35)}
 .pin-error{color:#ef4444;font-size:13px;margin-top:10px}
-
-/* RECEIPT */
 .receipt{font-family:monospace;font-size:13px;line-height:1.8;background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;white-space:pre-wrap;border:1px solid var(--border)}
-
-/* TOAST */
 .toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
 .toast{padding:12px 16px;border-radius:10px;color:white;font-size:14px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);animation:slideIn 0.3s ease;max-width:300px}
 .toast.success{background:linear-gradient(135deg,var(--brand),var(--brand-dark))}
 .toast.error{background:#ef4444}
 .toast.info{background:linear-gradient(135deg,var(--accent),var(--accent-dark))}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* HIDDEN */
 .hidden{display:none!important}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;flex:1}
@@ -206,7 +174,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 </head>
 <body>
 
-<!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- PIN LOCK -->
@@ -430,11 +397,21 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <!-- REPORTS PAGE -->
 <div class="page" id="page-reports">
   <div class="reports-page">
-    <div class="reports-tabs">
-      <button class="report-tab active" onclick="loadReport('today', this)">Today</button>
-      <button class="report-tab" onclick="loadReport('week', this)">This Week</button>
-      <button class="report-tab" onclick="loadReport('month', this)">This Month</button>
+    <!-- ✅ ADDED: Clear Reports button alongside period tabs -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+      <div class="reports-tabs" style="margin-bottom:0;gap:8px;display:flex">
+        <button class="report-tab active" onclick="loadReport('today', this)">Today</button>
+        <button class="report-tab" onclick="loadReport('week', this)">This Week</button>
+        <button class="report-tab" onclick="loadReport('month', this)">This Month</button>
+      </div>
+      <button
+        onclick="clearReportsPrompt()"
+        style="padding:8px 16px;background:#fee2e2;color:#ef4444;border:1px solid #fecaca;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px"
+        onmouseover="this.style.background='#fecaca'"
+        onmouseout="this.style.background='#fee2e2'"
+      >🗑️ Clear All Reports</button>
     </div>
+
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" id="statRevenue">KSh 0</div></div>
       <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="statTx">0</div></div>
@@ -458,7 +435,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
   <div class="settings-page">
-    <!-- Shop Info -->
     <div class="settings-section">
       <div class="settings-title">Shop Information</div>
       <div class="form-row">
@@ -474,8 +450,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         <button class="save-btn" onclick="saveShopSettings()">Save Shop Settings</button>
       </div>
     </div>
-
-    <!-- M-Pesa -->
     <div class="settings-section">
       <div class="settings-title">M-Pesa (Daraja) Settings</div>
       <div class="form-row">
@@ -497,8 +471,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         <button class="save-btn" onclick="saveMpesaSettings()">Save M-Pesa Settings</button>
       </div>
     </div>
-
-    <!-- Products Management -->
     <div class="settings-section">
       <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f1f5f9;margin-bottom:16px">
         <div class="settings-title" style="border:none;padding:0;margin:0">Product Management</div>
@@ -517,9 +489,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// ✅ FIREBASE CONFIG — YOUR CREDENTIALS
-// ═══════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyDs94_9B799yGtFEW2aBfu-QXCHv0EhjZo",
   authDomain: "nimart-pos.firebaseapp.com",
@@ -533,14 +502,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ✅ Enable offline persistence so the app works even with brief connectivity issues
 db.enablePersistence().catch(err => {
   console.warn('Offline persistence unavailable:', err.code);
 });
 
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
 let products = [];
 let cart = [];
 let discount = 0;
@@ -556,9 +521,6 @@ let lastSale = null;
 let currentReportRange = 'today';
 let allSales = [];
 
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
 async function init() {
   startClock();
   await loadSettings();
@@ -572,9 +534,6 @@ function startClock() {
   }, 1000);
 }
 
-// ═══════════════════════════════════════════
-// SETTINGS
-// ═══════════════════════════════════════════
 async function loadSettings() {
   try {
     const doc = await db.collection('settings').doc('main').get();
@@ -586,7 +545,6 @@ async function loadSettings() {
     applySettings();
   } catch(e) {
     console.error('Settings error:', e);
-    // Continue with defaults if settings fail to load
     applySettings();
   }
 }
@@ -628,15 +586,8 @@ async function saveMpesaSettings() {
   showToast('M-Pesa settings saved!', 'success');
 }
 
-// ═══════════════════════════════════════════
-// PRODUCTS — REAL-TIME
-// ✅ Fixed: removed dual orderBy (category + name) which requires a
-//    composite Firestore index. Now orders by name only, then sorts
-//    client-side by category so no index creation is needed.
-// ═══════════════════════════════════════════
 function listenProducts() {
   db.collection('products').orderBy('name').onSnapshot(snap => {
-    // ✅ Sort client-side by category then name — no composite index needed
     products = snap.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => {
@@ -664,7 +615,6 @@ function renderProducts() {
     (p.name || '').toLowerCase().includes(searchQuery) ||
     (p.barcode || '').includes(searchQuery)
   );
-
   if (!filtered.length) {
     grid.innerHTML = `<div class="empty-products" style="grid-column:1/-1"><div class="icon">📦</div><div style="font-weight:600">${searchQuery ? 'No products found' : 'No products yet'}</div><div style="font-size:13px;color:#94a3b8">Click "+ Add Product" to add your first product</div></div>`;
     return;
@@ -739,9 +689,6 @@ function renderProductsTable() {
   }).join('');
 }
 
-// ═══════════════════════════════════════════
-// PRODUCT MODAL
-// ═══════════════════════════════════════════
 function openAddProduct() {
   editingProductId = null;
   document.getElementById('productModalTitle').textContent = 'Add New Product';
@@ -772,9 +719,6 @@ function openEditProduct(id) {
 
 function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
 
-// ═══════════════════════════════════════════
-// RESTOCK
-// ═══════════════════════════════════════════
 let restockProductId = null;
 
 function openRestockModal(id) {
@@ -829,8 +773,6 @@ function updateProfit() {
   document.getElementById('profitBadge').textContent = `Profit Margin: ${margin}%`;
 }
 
-// ✅ Fixed: saveProduct now writes stock as a number (not string),
-//    and includes proper error handling with user feedback.
 async function saveProduct() {
   const barcode = document.getElementById('pBarcode').value.trim();
   const name = document.getElementById('pName').value.trim();
@@ -840,25 +782,19 @@ async function saveProduct() {
   const stock = parseInt(document.getElementById('pStock').value);
   const lowStock = parseInt(document.getElementById('pLowStock').value) || 5;
   const emoji = document.getElementById('pEmoji').value.trim() || '';
-
   if (!barcode || !name || !category || isNaN(price) || isNaN(stock)) {
     showToast('Please fill in all required fields', 'error');
     return;
   }
-
-  // ✅ stock stored as number for correct comparisons
   const data = {
-    barcode,
-    name,
-    category,
+    barcode, name, category,
     price: price.toString(),
     cost: cost.toString(),
-    stock: Number(stock),          // ✅ number, not string
-    lowStock: Number(lowStock),    // ✅ number, not string
+    stock: Number(stock),
+    lowStock: Number(lowStock),
     emoji,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-
   try {
     if (editingProductId) {
       await db.collection('products').doc(editingProductId).update(data);
@@ -871,7 +807,6 @@ async function saveProduct() {
     closeProductModal();
   } catch(e) {
     console.error('Save product error:', e);
-    // ✅ Show the actual Firebase error message so it's easier to debug
     showToast('Failed to save: ' + (e.message || e.code || 'unknown error'), 'error');
   }
 }
@@ -886,39 +821,25 @@ async function deleteProduct(id) {
   }
 }
 
-// ═══════════════════════════════════════════
-// BARCODE SCANNER
-// Works regardless of which element is focused.
-// Scanners type very fast (<50ms between keys) so
-// we distinguish scanner input from human typing by speed.
-// ═══════════════════════════════════════════
 let barcodeBuffer = '';
 let barcodeTimer = null;
 let lastKeyTime = 0;
-const SCANNER_SPEED_MS = 50; // scanners type faster than this
+const SCANNER_SPEED_MS = 50;
 
 document.addEventListener('keydown', e => {
-  // Only intercept on POS tab, and only when no modal is open
   if (activeTab !== 'pos') return;
   if (document.querySelector('.modal-overlay:not(.hidden)')) return;
-
   const now = Date.now();
   const timeSinceLast = now - lastKeyTime;
   lastKeyTime = now;
-
   const active = document.activeElement;
   const inOtherInput = active && active.tagName === 'INPUT' && active.id !== 'barcodeInput';
-
-  // If typing in another input (e.g. discount), only intercept if it looks
-  // like a scanner (very fast keystrokes) AND it's a digit
   if (inOtherInput) {
     const isScanner = timeSinceLast < SCANNER_SPEED_MS;
-    if (!isScanner) return; // human typing in a field — leave it alone
+    if (!isScanner) return;
   }
-
   if (e.key === 'Enter') {
     if (barcodeBuffer.length >= 3) {
-      // Prevent Enter from submitting forms or clicking buttons
       e.preventDefault();
       processBarcode(barcodeBuffer.trim());
     }
@@ -927,24 +848,17 @@ document.addEventListener('keydown', e => {
     document.getElementById('barcodeVal').classList.add('hidden');
     return;
   }
-
-  // Only accumulate printable characters
   if (e.key.length === 1) {
-    // If this keystroke is fast (scanner speed) or buffer already started, accumulate
     if (timeSinceLast < SCANNER_SPEED_MS || barcodeBuffer.length > 0) {
       barcodeBuffer += e.key;
-      // Mirror into the scanner bar input for visual feedback
       document.getElementById('barcodeInput').value = barcodeBuffer;
       document.getElementById('barcodeVal').textContent = barcodeBuffer;
       document.getElementById('barcodeVal').classList.remove('hidden');
     } else {
-      // Slow keystroke with empty buffer = human typing, reset
       barcodeBuffer = e.key;
     }
-    // Clear buffer if no Enter arrives within 300ms (incomplete scan)
     if (barcodeTimer) clearTimeout(barcodeTimer);
     barcodeTimer = setTimeout(() => {
-      // Only clear if it looks like an abandoned scan, not human input in barcodeInput
       if (document.activeElement.id !== 'barcodeInput') {
         barcodeBuffer = '';
         document.getElementById('barcodeInput').value = '';
@@ -954,7 +868,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Manual entry via the scanner bar input (typing by hand)
 function handleBarcodeKey(e) {
   if (e.key === 'Enter') {
     const val = document.getElementById('barcodeInput').value.trim();
@@ -968,7 +881,6 @@ function handleBarcodeKey(e) {
 }
 
 function handleBarcodeInput(val) {
-  // Keep barcodeBuffer in sync when user types manually in the field
   barcodeBuffer = val;
   const bv = document.getElementById('barcodeVal');
   if (val) { bv.textContent = val; bv.classList.remove('hidden'); } else bv.classList.add('hidden');
@@ -982,9 +894,6 @@ function processBarcode(barcode) {
   addToCart(product.id);
 }
 
-// ═══════════════════════════════════════════
-// CART
-// ═══════════════════════════════════════════
 function addToCart(productId) {
   const product = products.find(p => p.id === productId);
   if (!product || (product.stock || 0) === 0) return;
@@ -993,14 +902,7 @@ function addToCart(productId) {
     if (existing.qty >= product.stock) { showToast('Not enough stock!', 'error'); return; }
     existing.qty++;
   } else {
-    cart.push({
-      id: productId,
-      name: product.name,
-      price: parseFloat(product.price),
-      qty: 1,
-      barcode: product.barcode,
-      emoji: product.emoji || ''
-    });
+    cart.push({ id: productId, name: product.name, price: parseFloat(product.price), qty: 1, barcode: product.barcode, emoji: product.emoji || '' });
   }
   showToast(`✓ ${product.name}`, 'success');
   renderCart();
@@ -1109,8 +1011,6 @@ async function completeCashSale() {
   };
   try {
     const ref = await db.collection('sales').add(saleData);
-
-    // ✅ Update stock using a batch write
     const batch = db.batch();
     cart.forEach(item => {
       const product = products.find(p => p.id === item.id);
@@ -1120,7 +1020,6 @@ async function completeCashSale() {
       }
     });
     await batch.commit();
-
     lastSale = { id: ref.id, ...saleData, items: cart, total, subtotal, discount, cashGiven: given, change };
     closeCashModal();
     showReceipt();
@@ -1135,9 +1034,6 @@ async function completeCashSale() {
   }
 }
 
-// ═══════════════════════════════════════════
-// RECEIPT
-// ═══════════════════════════════════════════
 function showReceipt() {
   if (!lastSale) return;
   const date = new Date().toLocaleString('en-KE');
@@ -1177,24 +1073,10 @@ function printReceipt() {
   <meta charset="UTF-8">
   <title>Receipt</title>
   <style>
-    @page {
-      size: 80mm auto;
-      margin: 4mm;
-    }
+    @page { size: 80mm auto; margin: 4mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 72mm;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #000;
-      background: #fff;
-    }
-    pre {
-      width: 72mm;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+    html, body { width: 72mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; color: #000; background: #fff; }
+    pre { width: 72mm; white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>
 <body>
@@ -1212,10 +1094,6 @@ function printReceipt() {
   win.document.close();
 }
 
-// ═══════════════════════════════════════════
-// SALES — REAL-TIME
-// ✅ Fixed: single orderBy on createdAt only (no composite index needed)
-// ═══════════════════════════════════════════
 function listenSales() {
   db.collection('sales').orderBy('createdAt', 'desc').limit(200).onSnapshot(snap => {
     allSales = snap.docs.map(d => ({
@@ -1242,16 +1120,13 @@ function renderReport(range) {
   if (range === 'today') { start.setHours(0,0,0,0); }
   else if (range === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
   else { start.setDate(1); start.setHours(0,0,0,0); }
-
   const filtered = allSales.filter(s => new Date(s.createdAt) >= start);
   const revenue = filtered.reduce((s,x) => s + parseFloat(x.total || 0), 0);
   const mpesa = filtered.filter(s => s.paymentMethod === 'mpesa').length;
-
   document.getElementById('statRevenue').textContent = `KSh ${revenue.toLocaleString()}`;
   document.getElementById('statTx').textContent = filtered.length;
   document.getElementById('statAvg').textContent = filtered.length ? `KSh ${Math.round(revenue / filtered.length).toLocaleString()}` : 'KSh 0';
   document.getElementById('statMpesa').textContent = mpesa;
-
   const tbody = document.getElementById('salesTableBody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No sales in this period</td></tr>';
@@ -1271,8 +1146,41 @@ function renderReport(range) {
 }
 
 // ═══════════════════════════════════════════
-// TAB NAVIGATION WITH PIN LOCK
+// CLEAR REPORTS — PIN-protected batch delete
 // ═══════════════════════════════════════════
+function clearReportsPrompt() {
+  showPin(() => {
+    if (!confirm('⚠️ This will permanently delete ALL sales records from Firestore. This cannot be undone.\n\nAre you sure?')) return;
+    clearAllReports();
+  });
+}
+
+async function clearAllReports() {
+  try {
+    showToast('Clearing reports...', 'info');
+    // Firestore doesn't support bulk collection delete — batch-delete up to 500 at a time
+    const snap = await db.collection('sales').limit(500).get();
+    if (snap.empty) {
+      showToast('No sales records to clear', 'info');
+      return;
+    }
+    const batch = db.batch();
+    snap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    // If collection had more than 500 docs, recurse to get the rest
+    if (snap.docs.length === 500) {
+      await clearAllReports();
+    } else {
+      allSales = [];
+      renderReport(currentReportRange);
+      showToast('✓ All sales records cleared', 'success');
+    }
+  } catch(e) {
+    console.error('Clear reports error:', e);
+    showToast('Failed to clear reports: ' + e.message, 'error');
+  }
+}
+
 let adminUnlocked = false;
 
 function switchTab(tab) {
@@ -1288,9 +1196,6 @@ function switchTab(tab) {
   if (tab === 'pos') adminUnlocked = false;
 }
 
-// ═══════════════════════════════════════════
-// PIN LOCK
-// ═══════════════════════════════════════════
 function showPin(callback) {
   pinCallback = callback;
   pinValue = '';
@@ -1324,9 +1229,6 @@ function updatePinDots() {
   }
 }
 
-// ═══════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
