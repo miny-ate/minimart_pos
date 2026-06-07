@@ -35,13 +35,13 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         ShortCode:       shortcode,
         ResponseType:    "Completed",
-        ConfirmationURL: `${fnBase}/Confirmation`,
-        ValidationURL:   `${fnBase}/Validation`,
+        ConfirmationURL: `${fnBase}/confirmation`,
+        ValidationURL:   `${fnBase}/validation`,
       }),
     });
 
     const regData = await regRes.json();
-    res.json({ success: true, regData, confirmationUrl: `${fnBase}/Confirmation` });
+    res.json({ success: true, regData, confirmationUrl: `${fnBase}/confirmation` });
 
   } catch (error) {
     res.status(500).json({ error: error.message });
