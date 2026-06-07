@@ -167,6 +167,22 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .toast.error{background:#ef4444}
 .toast.info{background:linear-gradient(135deg,var(--accent),var(--accent-dark))}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── M-Pesa waiting spinner ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-ring{0%{transform:scale(0.8);opacity:1}100%{transform:scale(1.6);opacity:0}}
+.mpesa-spinner{width:64px;height:64px;border:4px solid var(--border2);border-top-color:#4ade80;border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 16px}
+.mpesa-pulse{position:relative;width:80px;height:80px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center}
+.mpesa-pulse::before{content:'';position:absolute;inset:0;border-radius:50%;background:rgba(74,222,128,0.2);animation:pulse-ring 1.4s ease-out infinite}
+.mpesa-status-waiting{color:#4ade80;font-weight:700;font-size:15px;text-align:center;margin-bottom:6px}
+.mpesa-status-sub{color:var(--muted);font-size:13px;text-align:center;margin-bottom:20px}
+.mpesa-status-success{color:#4ade80;font-size:32px;text-align:center;margin-bottom:8px;animation:slideIn 0.4s ease}
+.mpesa-timeout-bar{height:4px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.mpesa-timeout-fill{height:100%;background:linear-gradient(90deg,#4ade80,#16a34a);border-radius:2px;transition:width 1s linear}
+.mpesa-payment-info{background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border)}
+.mpesa-payment-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.mpesa-payment-row:last-child{margin-bottom:0;font-weight:700;font-size:15px;color:#4ade80;border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
+
 .hidden{display:none!important}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;flex:1}
@@ -179,7 +195,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <!-- PIN LOCK -->
 <div class="pin-overlay hidden" id="pinOverlay">
   <div class="pin-card">
-    <div style="font-size:36px;margin-bottom:10px"></div>
+    <div style="font-size:36px;margin-bottom:10px">🔐</div>
     <div class="pin-title">Admin Access</div>
     <div class="pin-sub">Enter your 4-digit PIN</div>
     <div class="pin-dots">
@@ -218,7 +234,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
       <div class="form-group">
         <label class="form-label">Emoji</label>
-        <input id="pEmoji" type="text" placeholder="" maxlength="2">
+        <input id="pEmoji" type="text" placeholder="📦" maxlength="2">
       </div>
     </div>
     <div class="form-group">
@@ -261,7 +277,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <div class="modal-overlay hidden" id="cashModal">
   <div class="modal">
     <button class="modal-close" onclick="closeCashModal()">✕</button>
-    <div class="modal-title">$ Cash Payment</div>
+    <div class="modal-title">💵 Cash Payment</div>
     <div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:16px;text-align:center">
       <div style="font-size:13px;color:#64748b">Amount Due</div>
       <div style="font-size:28px;font-weight:800;color:#c9a84c" id="cashDue">KSh 0</div>
@@ -285,7 +301,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <div class="modal-overlay hidden" id="receiptModal">
   <div class="modal">
     <button class="modal-close" onclick="closeReceiptModal()">✕</button>
-    <div class="modal-title">Receipt</div>
+    <div class="modal-title">🧾 Receipt</div>
     <div class="receipt" id="receiptContent"></div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="printReceipt()">🖨️ Print</button>
@@ -294,56 +310,78 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
   </div>
 </div>
 
-<!-- MPESA PAYMENT MODAL -->
+<!-- ══════════════════════════════════════════════
+     M-PESA PAYMENT MODAL  (fully rebuilt)
+     ══════════════════════════════════════════════ -->
 <div class="modal-overlay hidden" id="mpesaModal">
-  <div class="modal" style="max-width:400px">
-    <button class="modal-close" onclick="closeMpesaModal()">✕</button>
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="cancelMpesaPayment()">✕</button>
     <div class="modal-title">📱 M-Pesa Payment</div>
 
-    <div style="background:linear-gradient(135deg,#1a3a1a,#1e4a1e);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;border:1px solid #2d6a2d">
-      <div style="font-size:12px;color:#86efac;font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Amount Due</div>
-      <div style="font-size:32px;font-weight:800;color:#4ade80" id="mpesaDue">KSh 0</div>
-    </div>
+    <!-- ── STEP 1: Instructions (shown while waiting) ── -->
+    <div id="mpesaStepWaiting">
 
-    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Customer pays to:</div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:13px;color:var(--muted)">Pay Bill / Till</span>
-        <span style="font-size:14px;font-weight:700;color:var(--text)" id="mpesaShortcodeDisplay">—</span>
+      <!-- Amount block -->
+      <div style="background:linear-gradient(135deg,#1a3a1a,#1e4a1e);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;border:1px solid #2d6a2d">
+        <div style="font-size:12px;color:#86efac;font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Amount Due</div>
+        <div style="font-size:32px;font-weight:800;color:#4ade80" id="mpesaDue">KSh 0</div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:13px;color:var(--muted)">Account No.</span>
-        <span style="font-size:14px;font-weight:700;color:var(--text)" id="mpesaAccountDisplay">—</span>
+
+      <!-- Pay-to info -->
+      <div class="mpesa-payment-info">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Customer pays to:</div>
+        <div class="mpesa-payment-row"><span>Pay Bill / Till</span><span style="font-weight:700;color:var(--text)" id="mpesaShortcodeDisplay">—</span></div>
+        <div class="mpesa-payment-row"><span>Account No.</span><span style="font-weight:700;color:var(--text)" id="mpesaAccountDisplay">—</span></div>
+        <div class="mpesa-payment-row"><span>Amount</span><span id="mpesaAmountDisplay">KSh 0</span></div>
       </div>
-      <div style="display:flex;justify-content:space-between">
-        <span style="font-size:13px;color:var(--muted)">Amount</span>
-        <span style="font-size:14px;font-weight:700;color:#4ade80" id="mpesaAmountDisplay">KSh 0</span>
+
+      <!-- Steps -->
+      <div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:2.2">
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px">Customer steps:</div>
+        <div>1️⃣ M-Pesa → Lipa na M-Pesa → Pay Bill</div>
+        <div>2️⃣ Enter Business No. shown above</div>
+        <div>3️⃣ Enter Account No. shown above</div>
+        <div>4️⃣ Enter <strong style="color:#4ade80">exact amount</strong> shown above</div>
+        <div>5️⃣ Enter PIN and confirm</div>
+      </div>
+
+      <!-- Timeout progress bar -->
+      <div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+        <span>Waiting for payment…</span>
+        <span id="mpesaCountdown">5:00</span>
+      </div>
+      <div class="mpesa-timeout-bar">
+        <div class="mpesa-timeout-fill" id="mpesaTimeoutFill" style="width:100%"></div>
+      </div>
+
+      <!-- Spinner -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px">
+        <div class="mpesa-spinner"></div>
+        <div>
+          <div class="mpesa-status-waiting" id="mpesaStatusText">Awaiting payment…</div>
+          <div class="mpesa-status-sub" id="mpesaStatusSub">System will confirm automatically</div>
+        </div>
+      </div>
+
+      <button class="btn-secondary" onclick="cancelMpesaPayment()" style="width:100%">✕ Cancel Payment</button>
+    </div>
+
+    <!-- ── STEP 2: Success (shown after match) ── -->
+    <div id="mpesaStepSuccess" class="hidden">
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:64px;margin-bottom:10px">✅</div>
+        <div style="font-size:20px;font-weight:800;color:#4ade80;margin-bottom:6px">Payment Confirmed!</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:20px">M-Pesa payment received and verified</div>
+        <div class="mpesa-payment-info" style="text-align:left">
+          <div class="mpesa-payment-row"><span>Reference</span><span id="confirmedRef" style="font-family:monospace;font-weight:700;color:var(--text)">—</span></div>
+          <div class="mpesa-payment-row"><span>Customer</span><span id="confirmedName" style="color:var(--text)">—</span></div>
+          <div class="mpesa-payment-row"><span>Phone</span><span id="confirmedPhone" style="color:var(--text)">—</span></div>
+          <div class="mpesa-payment-row"><span>Amount Paid</span><span id="confirmedAmount">KSh 0</span></div>
+        </div>
+        <div style="font-size:13px;color:var(--muted)">Completing sale…</div>
       </div>
     </div>
 
-    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:2">
-      <div style="font-weight:700;color:var(--text);margin-bottom:6px">Customer steps:</div>
-      <div>1️⃣ Go to M-Pesa → Lipa na M-Pesa → Pay Bill</div>
-      <div>2️⃣ Enter Business No. shown above</div>
-      <div>3️⃣ Enter Account No. shown above</div>
-      <div>4️⃣ Enter exact amount shown above</div>
-      <div>5️⃣ Enter PIN and confirm</div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">M-Pesa Reference / Confirmation Code</label>
-      <input id="mpesaRef" type="text" placeholder="e.g. QHX4B7K9LL (from customer SMS)" style="font-family:monospace;letter-spacing:1px">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Ask customer to show their M-Pesa confirmation SMS</div>
-    </div>
-
-    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:12px;color:#854d0e;margin-bottom:16px">
-      ⚠️ Verify the customer's M-Pesa SMS shows the correct amount before confirming.
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeMpesaModal()">Cancel</button>
-      <button class="btn-primary" onclick="confirmMpesaSale()" id="confirmMpesaBtn">✓ Confirm Payment Received</button>
-    </div>
   </div>
 </div>
 
@@ -351,7 +389,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <div class="modal-overlay hidden" id="restockModal">
   <div class="modal" style="max-width:360px">
     <button class="modal-close" onclick="closeRestockModal()">✕</button>
-    <div class="modal-title">Restock Product</div>
+    <div class="modal-title">📦 Restock Product</div>
     <div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:16px">
       <div style="font-size:18px;margin-bottom:4px" id="restockEmoji"></div>
       <div style="font-weight:700;font-size:15px" id="restockName">Product</div>
@@ -398,7 +436,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <div class="page active" id="page-pos" style="flex-direction:row">
   <div class="products-panel">
     <div class="scanner-bar">
-      <span class="scanner-icon"></span>
+      <span class="scanner-icon">🔍</span>
       <input type="text" id="barcodeInput" placeholder="Scanner ready — scan a barcode or type here..." onkeydown="handleBarcodeKey(event)" oninput="handleBarcodeInput(this.value)">
       <span class="scanner-val hidden" id="barcodeVal"></span>
     </div>
@@ -487,7 +525,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <div class="page" id="page-settings">
   <div class="settings-page">
     <div class="settings-section">
-      <div class="settings-title">Shop Information</div>
+      <div class="settings-title">🏪 Shop Information</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Shop Name</label><input id="settingShopName" placeholder="My Shop"></div>
         <div class="form-group"><label class="form-label">Till Number</label><input id="settingTill" placeholder="TILL001"></div>
@@ -502,29 +540,33 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
     </div>
     <div class="settings-section">
-      <div class="settings-title">M-Pesa (Daraja) Settings</div>
+      <div class="settings-title">📱 M-Pesa (Daraja) Settings</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Consumer Key</label><input id="settingMpesaKey" type="password" placeholder="From Daraja portal"></div>
         <div class="form-group"><label class="form-label">Consumer Secret</label><input id="settingMpesaSecret" type="password" placeholder="From Daraja portal"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Short Code</label><input id="settingMpesaShortcode" placeholder="174379"></div>
+        <div class="form-group"><label class="form-label">Short Code / Till No.</label><input id="settingMpesaShortcode" placeholder="174379"></div>
         <div class="form-group"><label class="form-label">Passkey</label><input id="settingMpesaPasskey" type="password" placeholder="Passkey"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Environment</label>
-        <select id="settingMpesaEnv" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px">
+        <select id="settingMpesaEnv">
           <option value="sandbox">Sandbox (Testing)</option>
           <option value="production">Production (Live)</option>
         </select>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--muted);line-height:1.8;margin-top:10px">
+        <strong style="color:var(--text)">C2B Callback URLs</strong> — register these in your Safaricom Daraja portal:<br>
+        <span style="font-family:monospace;color:#4ade80" id="confirmUrlDisplay">Deploy functions first to get URLs</span>
       </div>
       <div class="settings-actions">
         <button class="save-btn" onclick="saveMpesaSettings()">Save M-Pesa Settings</button>
       </div>
     </div>
     <div class="settings-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #f1f5f9;margin-bottom:16px">
-        <div class="settings-title" style="border:none;padding:0;margin:0">Product Management</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px">
+        <div class="settings-title" style="border:none;padding:0;margin:0">📦 Product Management</div>
         <button class="add-product-btn" onclick="openAddProduct()">+ Add Product</button>
       </div>
       <div style="overflow-x:auto">
@@ -553,15 +595,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-db.enablePersistence().catch(err => {
-  console.warn('Offline persistence unavailable:', err.code);
-});
+db.enablePersistence().catch(err => console.warn('Offline persistence unavailable:', err.code));
 
 let products = [];
 let cart = [];
 let discount = 0;
 let paymentMethod = 'cash';
-let settings = { shopName:'My Shop', tillNumber:'TILL001', adminPin:'1234', shopAddress:'Nairobi, Kenya', shopPhone:'+254 700 000000' };
+let settings = {
+  shopName:'My Shop', tillNumber:'TILL001', adminPin:'1234',
+  shopAddress:'Nairobi, Kenya', shopPhone:'+254 700 000000'
+};
 let editingProductId = null;
 let pinCallback = null;
 let pinValue = '';
@@ -571,6 +614,13 @@ let activeCategory = 'all';
 let lastSale = null;
 let currentReportRange = 'today';
 let allSales = [];
+
+// ── M-Pesa polling state ──────────────────────────────────────────
+let mpesaListener = null;      // Firestore unsubscribe fn
+let mpesaTimer = null;         // countdown interval
+let mpesaTimeoutHandle = null; // auto-cancel timeout
+let mpesaOrderTotal = 0;       // amount we're waiting for
+const MPESA_TIMEOUT_SECS = 300; // 5 minutes
 
 async function init() {
   startClock();
@@ -585,85 +635,72 @@ function startClock() {
   }, 1000);
 }
 
-// ─── FIXED: loadSettings now reads from Firestore and calls applySettings() ───
 async function loadSettings() {
   try {
     const doc = await db.collection('settings').doc('main').get();
-    if (doc.exists) {
-      const data = doc.data();
-      // Merge saved data into the settings object
-      settings = { ...settings, ...data };
-      console.log('Settings loaded from Firestore:', data);
-    }
-    // Always apply (uses defaults if nothing saved yet)
+    if (doc.exists) settings = { ...settings, ...doc.data() };
     applySettings();
-  } catch (error) {
-    console.error('Error loading settings from Firestore:', error);
+  } catch (e) {
+    console.error('Error loading settings:', e);
     applySettings();
   }
 }
 
-// applySettings() is the single place that writes values into the UI fields
 function applySettings() {
-  document.getElementById('headerSub').textContent = `${settings.shopName || 'My Shop'} • ${settings.tillNumber || 'TILL001'}`;
-  document.getElementById('settingShopName').value = settings.shopName || '';
-  document.getElementById('settingTill').value = settings.tillNumber || '';
-  document.getElementById('settingAddress').value = settings.shopAddress || '';
-  document.getElementById('settingPhone').value = settings.shopPhone || '';
-  document.getElementById('settingPin').value = settings.adminPin || '';
-  document.getElementById('settingMpesaKey').value = settings.mpesaKey || '';
-  document.getElementById('settingMpesaSecret').value = settings.mpesaSecret || '';
-  document.getElementById('settingMpesaShortcode').value = settings.mpesaShortcode || '';
-  document.getElementById('settingMpesaPasskey').value = settings.mpesaPasskey || '';
-  document.getElementById('settingMpesaEnv').value = settings.mpesaEnv || 'sandbox';
+  document.getElementById('headerSub').textContent =
+    `${settings.shopName || 'My Shop'} • ${settings.tillNumber || 'TILL001'}`;
+  document.getElementById('settingShopName').value  = settings.shopName    || '';
+  document.getElementById('settingTill').value      = settings.tillNumber  || '';
+  document.getElementById('settingAddress').value   = settings.shopAddress || '';
+  document.getElementById('settingPhone').value     = settings.shopPhone   || '';
+  document.getElementById('settingPin').value       = settings.adminPin    || '';
+  document.getElementById('settingMpesaKey').value      = settings.mpesaKey       || '';
+  document.getElementById('settingMpesaSecret').value   = settings.mpesaSecret    || '';
+  document.getElementById('settingMpesaShortcode').value= settings.mpesaShortcode || '';
+  document.getElementById('settingMpesaPasskey').value  = settings.mpesaPasskey   || '';
+  document.getElementById('settingMpesaEnv').value      = settings.mpesaEnv       || 'sandbox';
 }
 
-// ─── FIXED: saveShopSettings now reads from the correct element IDs ───
 async function saveShopSettings() {
   const shopName    = document.getElementById('settingShopName').value;
   const tillNumber  = document.getElementById('settingTill').value;
   const shopAddress = document.getElementById('settingAddress').value;
   const shopPhone   = document.getElementById('settingPhone').value;
   const adminPin    = document.getElementById('settingPin').value;
-
-  // Keep settings object in sync so PIN check works immediately
   settings = { ...settings, shopName, tillNumber, shopAddress, shopPhone, adminPin };
   applySettings();
-
   try {
     await db.collection('settings').doc('main').set(
       { shopName, tillNumber, shopAddress, shopPhone, adminPin, lastUpdated: new Date() },
       { merge: true }
     );
     showToast('✓ Shop settings saved!', 'success');
-  } catch (error) {
-    console.error('Error saving shop settings:', error);
-    showToast('Error saving: ' + error.message, 'error');
+  } catch (e) {
+    showToast('Error saving: ' + e.message, 'error');
   }
 }
 
-// ─── FIXED: saveMpesaSettings now reads from the correct element IDs ───
 async function saveMpesaSettings() {
-  const mpesaKey      = document.getElementById('settingMpesaKey').value;
-  const mpesaSecret   = document.getElementById('settingMpesaSecret').value;
-  const mpesaShortcode= document.getElementById('settingMpesaShortcode').value;
-  const mpesaPasskey  = document.getElementById('settingMpesaPasskey').value;
-  const mpesaEnv      = document.getElementById('settingMpesaEnv').value;
-
+  const mpesaKey       = document.getElementById('settingMpesaKey').value;
+  const mpesaSecret    = document.getElementById('settingMpesaSecret').value;
+  const mpesaShortcode = document.getElementById('settingMpesaShortcode').value;
+  const mpesaPasskey   = document.getElementById('settingMpesaPasskey').value;
+  const mpesaEnv       = document.getElementById('settingMpesaEnv').value;
   settings = { ...settings, mpesaKey, mpesaSecret, mpesaShortcode, mpesaPasskey, mpesaEnv };
-
   try {
     await db.collection('settings').doc('main').set(
       { mpesaKey, mpesaSecret, mpesaShortcode, mpesaPasskey, mpesaEnv, lastUpdated: new Date() },
       { merge: true }
     );
     showToast('✓ M-Pesa settings saved!', 'success');
-  } catch (error) {
-    console.error('Error saving M-Pesa settings:', error);
-    showToast('Error saving: ' + error.message, 'error');
+  } catch (e) {
+    showToast('Error saving: ' + e.message, 'error');
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// PRODUCTS
+// ─────────────────────────────────────────────────────────────────
 function listenProducts() {
   db.collection('products').orderBy('name').onSnapshot(snap => {
     products = snap.docs
@@ -671,18 +708,14 @@ function listenProducts() {
       .sort((a, b) => {
         const catA = (a.category || '').toLowerCase();
         const catB = (b.category || '').toLowerCase();
-        if (catA < catB) return -1;
-        if (catA > catB) return 1;
+        if (catA !== catB) return catA < catB ? -1 : 1;
         return (a.name || '').localeCompare(b.name || '');
       });
     renderProducts();
     renderCategoryFilter();
     renderProductsTable();
     updateStockAlerts();
-  }, err => {
-    console.error('Products listener error:', err);
-    showToast('Error loading products: ' + err.message, 'error');
-  });
+  }, err => showToast('Error loading products: ' + err.message, 'error'));
 }
 
 function renderProducts() {
@@ -694,7 +727,11 @@ function renderProducts() {
     (p.barcode || '').includes(searchQuery)
   );
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty-products" style="grid-column:1/-1"><div class="icon">📦</div><div style="font-weight:600">${searchQuery ? 'No products found' : 'No products yet'}</div><div style="font-size:13px;color:#94a3b8">Click "+ Add Product" to add your first product</div></div>`;
+    grid.innerHTML = `<div class="empty-products" style="grid-column:1/-1">
+      <div class="icon">📦</div>
+      <div style="font-weight:600">${searchQuery ? 'No products found' : 'No products yet'}</div>
+      <div style="font-size:13px;color:#94a3b8">Click "+ Add Product" to get started</div>
+    </div>`;
     return;
   }
   grid.innerHTML = filtered.map(p => {
@@ -704,16 +741,19 @@ function renderProducts() {
       <div class="product-emoji">${p.emoji || '📦'}</div>
       <div class="product-name">${p.name}</div>
       <div class="product-price">KSh ${parseFloat(p.price || 0).toLocaleString()}</div>
-      <div class="product-stock ${isOut ? 'stock-out' : isLow ? 'stock-low' : ''}">${isOut ? '❌ Out of stock' : isLow ? `⚠️ ${p.stock} left` : `${p.stock} in stock`}</div>
+      <div class="product-stock ${isOut ? 'stock-out' : isLow ? 'stock-low' : ''}">
+        ${isOut ? '❌ Out of stock' : isLow ? `⚠️ ${p.stock} left` : `${p.stock} in stock`}
+      </div>
     </div>`;
   }).join('');
 }
 
 function renderCategoryFilter() {
   const cats = ['all', ...new Set(products.map(p => p.category).filter(Boolean))];
-  const filter = document.getElementById('categoryFilter');
-  filter.innerHTML = cats.map(c =>
-    `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" onclick="filterCategory('${c}', this)">${c === 'all' ? 'All' : c}</button>`
+  document.getElementById('categoryFilter').innerHTML = cats.map(c =>
+    `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" onclick="filterCategory('${c}', this)">
+      ${c === 'all' ? 'All' : c}
+    </button>`
   ).join('');
 }
 
@@ -724,20 +764,17 @@ function filterCategory(cat, btn) {
   renderProducts();
 }
 
-function filterProducts(q) {
-  searchQuery = q.toLowerCase();
-  renderProducts();
-}
+function filterProducts(q) { searchQuery = q.toLowerCase(); renderProducts(); }
 
 function updateStockAlerts() {
   const low = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= (p.lowStock || 5)).length;
   const out = products.filter(p => (p.stock || 0) === 0).length;
   const lowBadge = document.getElementById('lowStockBadge');
   const outBadge = document.getElementById('outStockBadge');
-  if (low > 0) { lowBadge.textContent = `${low} Low Stock`; lowBadge.classList.remove('hidden'); }
-  else lowBadge.classList.add('hidden');
-  if (out > 0) { outBadge.textContent = `${out} Out of Stock`; outBadge.classList.remove('hidden'); }
-  else outBadge.classList.add('hidden');
+  low > 0 ? (lowBadge.textContent = `${low} Low Stock`, lowBadge.classList.remove('hidden'))
+          : lowBadge.classList.add('hidden');
+  out > 0 ? (outBadge.textContent = `${out} Out of Stock`, outBadge.classList.remove('hidden'))
+          : outBadge.classList.add('hidden');
 }
 
 function renderProductsTable() {
@@ -750,14 +787,14 @@ function renderProductsTable() {
     const stock = p.stock || 0;
     const isOut = stock === 0;
     const isLow = !isOut && stock <= (p.lowStock || 5);
-    const stockColor = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#c9a84c';
-    const stockLabel = isOut ? `❌ ${stock}` : isLow ? `⚠️ ${stock}` : stock;
+    const color = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#c9a84c';
+    const label = isOut ? `❌ ${stock}` : isLow ? `⚠️ ${stock}` : stock;
     return `<tr>
       <td style="font-size:20px">${p.emoji || ''}</td>
       <td style="font-weight:500">${p.name}</td>
       <td>${p.category || ''}</td>
       <td>KSh ${parseFloat(p.price || 0).toLocaleString()}</td>
-      <td style="font-weight:700;color:${stockColor}">${stockLabel}</td>
+      <td style="font-weight:700;color:${color}">${label}</td>
       <td>
         <button class="restock-btn" onclick="openRestockModal('${p.id}')">Restock</button>
         <button class="edit-btn" onclick="openEditProduct('${p.id}')">Edit</button>
@@ -767,13 +804,15 @@ function renderProductsTable() {
   }).join('');
 }
 
+// ─────────────────────────────────────────────────────────────────
+// PRODUCT MODAL
+// ─────────────────────────────────────────────────────────────────
 function openAddProduct() {
   editingProductId = null;
   document.getElementById('productModalTitle').textContent = 'Add New Product';
-  ['pBarcode','pName','pCategory'].forEach(id => document.getElementById(id).value = '');
+  ['pBarcode','pName','pCategory','pEmoji'].forEach(id => document.getElementById(id).value = '');
   ['pPrice','pCost','pStock'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('pLowStock').value = '5';
-  document.getElementById('pEmoji').value = '';
   updateProfit();
   document.getElementById('productModal').classList.remove('hidden');
 }
@@ -783,28 +822,81 @@ function openEditProduct(id) {
   if (!p) return;
   editingProductId = id;
   document.getElementById('productModalTitle').textContent = 'Edit Product';
-  document.getElementById('pBarcode').value = p.barcode || '';
-  document.getElementById('pName').value = p.name || '';
-  document.getElementById('pCategory').value = p.category || '';
-  document.getElementById('pEmoji').value = p.emoji || '';
-  document.getElementById('pPrice').value = p.price || '';
-  document.getElementById('pCost').value = p.cost || '';
-  document.getElementById('pStock').value = p.stock || '';
-  document.getElementById('pLowStock').value = p.lowStock || 5;
+  document.getElementById('pBarcode').value   = p.barcode   || '';
+  document.getElementById('pName').value      = p.name      || '';
+  document.getElementById('pCategory').value  = p.category  || '';
+  document.getElementById('pEmoji').value     = p.emoji     || '';
+  document.getElementById('pPrice').value     = p.price     || '';
+  document.getElementById('pCost').value      = p.cost      || '';
+  document.getElementById('pStock').value     = p.stock     || '';
+  document.getElementById('pLowStock').value  = p.lowStock  || 5;
   updateProfit();
   document.getElementById('productModal').classList.remove('hidden');
 }
 
 function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
 
+function updateProfit() {
+  const price = parseFloat(document.getElementById('pPrice').value) || 0;
+  const cost  = parseFloat(document.getElementById('pCost').value)  || 0;
+  const margin = price > 0 ? Math.round(((price - cost) / price) * 100) : 0;
+  document.getElementById('profitBadge').textContent = `Profit Margin: ${margin}%`;
+}
+
+async function saveProduct() {
+  const barcode  = document.getElementById('pBarcode').value.trim();
+  const name     = document.getElementById('pName').value.trim();
+  const category = document.getElementById('pCategory').value.trim();
+  const price    = parseFloat(document.getElementById('pPrice').value);
+  const cost     = parseFloat(document.getElementById('pCost').value) || 0;
+  const stock    = parseInt(document.getElementById('pStock').value);
+  const lowStock = parseInt(document.getElementById('pLowStock').value) || 5;
+  const emoji    = document.getElementById('pEmoji').value.trim() || '';
+  if (!barcode || !name || !category || isNaN(price) || isNaN(stock)) {
+    showToast('Please fill in all required fields', 'error'); return;
+  }
+  const data = {
+    barcode, name, category,
+    price: price.toString(), cost: cost.toString(),
+    stock: Number(stock), lowStock: Number(lowStock), emoji,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try {
+    if (editingProductId) {
+      await db.collection('products').doc(editingProductId).update(data);
+      showToast('Product updated!', 'success');
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('products').add(data);
+      showToast('Product added!', 'success');
+    }
+    closeProductModal();
+  } catch(e) {
+    showToast('Failed to save: ' + (e.message || e.code || 'unknown error'), 'error');
+  }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  try {
+    await db.collection('products').doc(id).delete();
+    showToast('Product deleted', 'info');
+  } catch(e) {
+    showToast('Failed to delete: ' + e.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RESTOCK
+// ─────────────────────────────────────────────────────────────────
 let restockProductId = null;
 
 function openRestockModal(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
   restockProductId = id;
-  document.getElementById('restockEmoji').textContent = p.emoji || '';
-  document.getElementById('restockName').textContent = p.name;
+  document.getElementById('restockEmoji').textContent   = p.emoji || '';
+  document.getElementById('restockName').textContent    = p.name;
   document.getElementById('restockCurrent').textContent = p.stock || 0;
   document.getElementById('restockQty').value = '';
   document.getElementById('restockPreview').textContent = 'New stock level: —';
@@ -820,9 +912,8 @@ function updateRestockPreview() {
   const p = products.find(x => x.id === restockProductId);
   if (!p) return;
   const qty = parseInt(document.getElementById('restockQty').value) || 0;
-  const newStock = (p.stock || 0) + qty;
   document.getElementById('restockPreview').textContent = qty > 0
-    ? `New stock level: ${newStock} units`
+    ? `New stock level: ${(p.stock || 0) + qty} units`
     : 'New stock level: —';
 }
 
@@ -831,10 +922,9 @@ async function confirmRestock() {
   if (!p) return;
   const qty = parseInt(document.getElementById('restockQty').value);
   if (!qty || qty < 1) { showToast('Enter a valid quantity', 'error'); return; }
-  const newStock = (p.stock || 0) + qty;
   try {
     await db.collection('products').doc(restockProductId).update({
-      stock: newStock,
+      stock: (p.stock || 0) + qty,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✓ Added ${qty} units to ${p.name}`, 'success');
@@ -844,61 +934,9 @@ async function confirmRestock() {
   }
 }
 
-function updateProfit() {
-  const price = parseFloat(document.getElementById('pPrice').value) || 0;
-  const cost = parseFloat(document.getElementById('pCost').value) || 0;
-  const margin = price > 0 ? Math.round(((price - cost) / price) * 100) : 0;
-  document.getElementById('profitBadge').textContent = `Profit Margin: ${margin}%`;
-}
-
-async function saveProduct() {
-  const barcode = document.getElementById('pBarcode').value.trim();
-  const name = document.getElementById('pName').value.trim();
-  const category = document.getElementById('pCategory').value.trim();
-  const price = parseFloat(document.getElementById('pPrice').value);
-  const cost = parseFloat(document.getElementById('pCost').value) || 0;
-  const stock = parseInt(document.getElementById('pStock').value);
-  const lowStock = parseInt(document.getElementById('pLowStock').value) || 5;
-  const emoji = document.getElementById('pEmoji').value.trim() || '';
-  if (!barcode || !name || !category || isNaN(price) || isNaN(stock)) {
-    showToast('Please fill in all required fields', 'error');
-    return;
-  }
-  const data = {
-    barcode, name, category,
-    price: price.toString(),
-    cost: cost.toString(),
-    stock: Number(stock),
-    lowStock: Number(lowStock),
-    emoji,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  try {
-    if (editingProductId) {
-      await db.collection('products').doc(editingProductId).update(data);
-      showToast('Product updated!', 'success');
-    } else {
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      await db.collection('products').add(data);
-      showToast('Product added!', 'success');
-    }
-    closeProductModal();
-  } catch(e) {
-    console.error('Save product error:', e);
-    showToast('Failed to save: ' + (e.message || e.code || 'unknown error'), 'error');
-  }
-}
-
-async function deleteProduct(id) {
-  if (!confirm('Delete this product?')) return;
-  try {
-    await db.collection('products').doc(id).delete();
-    showToast('Product deleted', 'info');
-  } catch(e) {
-    showToast('Failed to delete: ' + e.message, 'error');
-  }
-}
-
+// ─────────────────────────────────────────────────────────────────
+// BARCODE SCANNER
+// ─────────────────────────────────────────────────────────────────
 let barcodeBuffer = '';
 let barcodeTimer = null;
 let lastKeyTime = 0;
@@ -912,15 +950,9 @@ document.addEventListener('keydown', e => {
   lastKeyTime = now;
   const active = document.activeElement;
   const inOtherInput = active && active.tagName === 'INPUT' && active.id !== 'barcodeInput';
-  if (inOtherInput) {
-    const isScanner = timeSinceLast < SCANNER_SPEED_MS;
-    if (!isScanner) return;
-  }
+  if (inOtherInput && timeSinceLast >= SCANNER_SPEED_MS) return;
   if (e.key === 'Enter') {
-    if (barcodeBuffer.length >= 3) {
-      e.preventDefault();
-      processBarcode(barcodeBuffer.trim());
-    }
+    if (barcodeBuffer.length >= 3) { e.preventDefault(); processBarcode(barcodeBuffer.trim()); }
     barcodeBuffer = '';
     document.getElementById('barcodeInput').value = '';
     document.getElementById('barcodeVal').classList.add('hidden');
@@ -961,7 +993,7 @@ function handleBarcodeKey(e) {
 function handleBarcodeInput(val) {
   barcodeBuffer = val;
   const bv = document.getElementById('barcodeVal');
-  if (val) { bv.textContent = val; bv.classList.remove('hidden'); } else bv.classList.add('hidden');
+  val ? (bv.textContent = val, bv.classList.remove('hidden')) : bv.classList.add('hidden');
 }
 
 function processBarcode(barcode) {
@@ -972,6 +1004,9 @@ function processBarcode(barcode) {
   addToCart(product.id);
 }
 
+// ─────────────────────────────────────────────────────────────────
+// CART
+// ─────────────────────────────────────────────────────────────────
 function addToCart(productId) {
   const product = products.find(p => p.id === productId);
   if (!product || (product.stock || 0) === 0) return;
@@ -980,7 +1015,8 @@ function addToCart(productId) {
     if (existing.qty >= product.stock) { showToast('Not enough stock!', 'error'); return; }
     existing.qty++;
   } else {
-    cart.push({ id: productId, name: product.name, price: parseFloat(product.price), qty: 1, barcode: product.barcode, emoji: product.emoji || '' });
+    cart.push({ id: productId, name: product.name, price: parseFloat(product.price),
+                qty: 1, barcode: product.barcode, emoji: product.emoji || '' });
   }
   showToast(`✓ ${product.name}`, 'success');
   renderCart();
@@ -1007,7 +1043,11 @@ function renderCart() {
   const container = document.getElementById('cartItems');
   document.getElementById('cartCount').textContent = cart.reduce((s,i) => s+i.qty, 0);
   if (!cart.length) {
-    container.innerHTML = `<div class="cart-empty"><div class="icon">🛍️</div><div style="font-weight:500">Cart is empty</div><div style="font-size:12px;color:#cbd5e1">Tap products to add</div></div>`;
+    container.innerHTML = `<div class="cart-empty">
+      <div class="icon">🛍️</div>
+      <div style="font-weight:500">Cart is empty</div>
+      <div style="font-size:12px;color:#cbd5e1">Tap products to add</div>
+    </div>`;
   } else {
     container.innerHTML = cart.map(item => `<div class="cart-item">
       <span style="font-size:20px">${item.emoji}</span>
@@ -1032,13 +1072,10 @@ function updateTotals() {
   const total = subtotal - discount;
   document.getElementById('subtotalDisplay').textContent = `KSh ${subtotal.toLocaleString()}`;
   document.getElementById('discountDisplay').textContent = `- KSh ${discount.toLocaleString()}`;
-  document.getElementById('totalDisplay').textContent = `KSh ${total.toLocaleString()}`;
+  document.getElementById('totalDisplay').textContent    = `KSh ${total.toLocaleString()}`;
 }
 
-function getTotal() {
-  const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
-  return subtotal - Math.min(parseFloat(document.getElementById('discountInput').value) || 0, subtotal);
-}
+function getTotal()    { const s = cart.reduce((a,i) => a + i.price*i.qty, 0); return s - Math.min(parseFloat(document.getElementById('discountInput').value)||0, s); }
 function getSubtotal() { return cart.reduce((s,i) => s + i.price * i.qty, 0); }
 
 function setPayment(method) {
@@ -1047,14 +1084,17 @@ function setPayment(method) {
   document.getElementById('payBtnMpesa').classList.toggle('active', method === 'mpesa');
 }
 
+// ─────────────────────────────────────────────────────────────────
+// CHECKOUT
+// ─────────────────────────────────────────────────────────────────
 function checkout() {
   if (!cart.length) { showToast('Cart is empty', 'error'); return; }
   if (paymentMethod === 'cash') {
     const total = getTotal();
-    document.getElementById('cashDue').textContent = `KSh ${total.toLocaleString()}`;
-    document.getElementById('cashGiven').value = '';
+    document.getElementById('cashDue').textContent  = `KSh ${total.toLocaleString()}`;
+    document.getElementById('cashGiven').value      = '';
     document.getElementById('changeDisplay').textContent = 'KSh 0';
-    document.getElementById('completeCashBtn').disabled = true;
+    document.getElementById('completeCashBtn').disabled  = true;
     document.getElementById('cashModal').classList.remove('hidden');
   } else {
     openMpesaModal();
@@ -1064,61 +1104,156 @@ function checkout() {
 function updateChange() {
   const total = getTotal();
   const given = parseFloat(document.getElementById('cashGiven').value) || 0;
-  const change = given - total;
-  document.getElementById('changeDisplay').textContent = `KSh ${Math.max(0, change).toLocaleString()}`;
+  document.getElementById('changeDisplay').textContent = `KSh ${Math.max(0, given - total).toLocaleString()}`;
   document.getElementById('completeCashBtn').disabled = given < total;
 }
 
 function closeCashModal() { document.getElementById('cashModal').classList.add('hidden'); }
 
+// ─────────────────────────────────────────────────────────────────
+// M-PESA — open modal & start polling
+// ─────────────────────────────────────────────────────────────────
 function openMpesaModal() {
-  const total = getTotal();
-  const shortcode = settings.mpesaShortcode || 'Not set — add in Settings';
-  const tillNo = settings.tillNumber || 'TILL001';
+  const total      = getTotal();
+  const shortcode  = settings.mpesaShortcode || '—';
+  const tillNo     = settings.tillNumber     || 'TILL001';
+  mpesaOrderTotal  = total;
 
-  document.getElementById('mpesaDue').textContent = `KSh ${total.toLocaleString()}`;
+  // Reset UI to waiting state
+  document.getElementById('mpesaStepWaiting').classList.remove('hidden');
+  document.getElementById('mpesaStepSuccess').classList.add('hidden');
+  document.getElementById('mpesaDue').textContent           = `KSh ${total.toLocaleString()}`;
   document.getElementById('mpesaShortcodeDisplay').textContent = shortcode;
-  document.getElementById('mpesaAccountDisplay').textContent = tillNo;
-  document.getElementById('mpesaAmountDisplay').textContent = `KSh ${total.toLocaleString()}`;
-  document.getElementById('mpesaRef').value = '';
+  document.getElementById('mpesaAccountDisplay').textContent  = tillNo;
+  document.getElementById('mpesaAmountDisplay').textContent   = `KSh ${total.toLocaleString()}`;
+  document.getElementById('mpesaStatusText').textContent      = 'Awaiting payment…';
+  document.getElementById('mpesaStatusSub').textContent       = 'System will confirm automatically';
+  document.getElementById('mpesaTimeoutFill').style.width     = '100%';
   document.getElementById('mpesaModal').classList.remove('hidden');
+
+  startMpesaCountdown();
+  startMpesaListener(total);
 }
 
-function closeMpesaModal() { document.getElementById('mpesaModal').classList.add('hidden'); }
+function startMpesaCountdown() {
+  let secsLeft = MPESA_TIMEOUT_SECS;
+  if (mpesaTimer) clearInterval(mpesaTimer);
+  if (mpesaTimeoutHandle) clearTimeout(mpesaTimeoutHandle);
 
-async function confirmMpesaSale() {
-  const ref = document.getElementById('mpesaRef').value.trim();
-  if (!ref) {
-    showToast('Enter the M-Pesa confirmation code', 'error');
-    return;
-  }
+  mpesaTimer = setInterval(() => {
+    secsLeft--;
+    const pct = (secsLeft / MPESA_TIMEOUT_SECS) * 100;
+    document.getElementById('mpesaTimeoutFill').style.width = pct + '%';
+    const mins = Math.floor(secsLeft / 60);
+    const secs = secsLeft % 60;
+    document.getElementById('mpesaCountdown').textContent =
+      `${mins}:${String(secs).padStart(2,'0')}`;
+    if (secsLeft <= 0) {
+      clearInterval(mpesaTimer);
+      stopMpesaListener();
+      document.getElementById('mpesaStatusText').textContent = '⏱ Timed out — no payment received';
+      document.getElementById('mpesaStatusSub').textContent  = 'Please try again or use cash';
+    }
+  }, 1000);
 
-  const total = getTotal();
+  mpesaTimeoutHandle = setTimeout(() => {
+    clearInterval(mpesaTimer);
+    stopMpesaListener();
+  }, MPESA_TIMEOUT_SECS * 1000);
+}
+
+/**
+ * Listen to mpesa_payments collection for a doc matching the exact amount
+ * with status == 'pending'. When found, auto-complete the sale.
+ *
+ * The Cloud Function writes to:
+ *   db.collection('mpesa_payments').doc(TransID).set({ amount, phone, ... status:'pending' })
+ */
+function startMpesaListener(expectedAmount) {
+  stopMpesaListener(); // clear any previous listener
+
+  // Look back 10 minutes max to avoid matching old payments
+  const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+  mpesaListener = db.collection('mpesa_payments')
+    .where('amount', '==', expectedAmount)
+    .where('status', '==', 'pending')
+    .where('receivedAt', '>=', tenMinsAgo)
+    .onSnapshot(async snap => {
+      if (snap.empty) return; // nothing yet — keep waiting
+
+      // Take the first matching payment
+      const payDoc  = snap.docs[0];
+      const payment = payDoc.data();
+
+      // Stop polling immediately
+      stopMpesaListener();
+
+      // Mark as matched in Firestore
+      try {
+        await db.collection('mpesa_payments').doc(payDoc.id).update({ status: 'matched' });
+      } catch(e) {
+        console.warn('Could not mark payment as matched:', e);
+      }
+
+      // Show success screen
+      document.getElementById('mpesaStepWaiting').classList.add('hidden');
+      document.getElementById('mpesaStepSuccess').classList.remove('hidden');
+      document.getElementById('confirmedRef').textContent    = payment.reference   || payDoc.id;
+      document.getElementById('confirmedName').textContent   = payment.customerName || '—';
+      document.getElementById('confirmedPhone').textContent  = payment.phone        || '—';
+      document.getElementById('confirmedAmount').textContent = `KSh ${payment.amount.toLocaleString()}`;
+
+      // Auto-complete sale after 1.5s so cashier sees the success screen
+      setTimeout(() => completeMpesaSale(payment), 1500);
+    }, err => {
+      console.error('M-Pesa listener error:', err);
+      showToast('Payment listener error: ' + err.message, 'error');
+    });
+}
+
+function stopMpesaListener() {
+  if (mpesaListener) { mpesaListener(); mpesaListener = null; }
+  if (mpesaTimer)    { clearInterval(mpesaTimer);   mpesaTimer = null; }
+  if (mpesaTimeoutHandle) { clearTimeout(mpesaTimeoutHandle); mpesaTimeoutHandle = null; }
+}
+
+function cancelMpesaPayment() {
+  stopMpesaListener();
+  document.getElementById('mpesaModal').classList.add('hidden');
+}
+
+async function completeMpesaSale(payment) {
+  const total    = mpesaOrderTotal;
   const subtotal = getSubtotal();
 
   const saleData = {
-    items: JSON.stringify(cart),
-    subtotal: subtotal.toString(),
-    discount: discount.toString(),
-    total: total.toString(),
+    items:         JSON.stringify(cart),
+    subtotal:      subtotal.toString(),
+    discount:      discount.toString(),
+    total:         total.toString(),
     paymentMethod: 'mpesa',
-    mpesaRef: ref,
-    mpesaShortcode: settings.mpesaShortcode || '',
-    cashGiven: total.toString(),
-    change: '0',
-    cashier: settings.tillNumber || 'TILL001',
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    mpesaRef:      payment.reference || payment.transID || '',
+    mpesaPhone:    payment.phone     || '',
+    mpesaCustomer: payment.customerName || '',
+    mpesaShortcode:settings.mpesaShortcode || '',
+    cashGiven:     total.toString(),
+    change:        '0',
+    cashier:       settings.tillNumber || 'TILL001',
+    createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   try {
     const docRef = await db.collection('sales').add(saleData);
 
+    // Deduct stock
     const batch = db.batch();
     cart.forEach(item => {
       const product = products.find(p => p.id === item.id);
       if (product) {
-        const pRef = db.collection('products').doc(item.id);
-        batch.update(pRef, { stock: Math.max(0, (product.stock || 0) - item.qty) });
+        batch.update(db.collection('products').doc(item.id), {
+          stock: Math.max(0, (product.stock || 0) - item.qty)
+        });
       }
     });
     await batch.commit();
@@ -1126,46 +1261,54 @@ async function confirmMpesaSale() {
     lastSale = {
       id: docRef.id, ...saleData,
       items: cart, total, subtotal, discount,
-      cashGiven: total, change: 0, mpesaRef: ref
+      cashGiven: total, change: 0,
+      mpesaRef: payment.reference || ''
     };
 
-    closeMpesaModal();
+    document.getElementById('mpesaModal').classList.add('hidden');
     showReceipt();
+
     cart = [];
     discount = 0;
     document.getElementById('discountInput').value = 0;
     renderCart();
-    showToast('✓ M-Pesa sale completed!', 'success');
+    showToast('✅ M-Pesa payment verified & sale complete!', 'success');
   } catch(e) {
-    console.error('M-Pesa sale error:', e);
+    console.error('Complete M-Pesa sale error:', e);
     showToast('Failed to record sale: ' + e.message, 'error');
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// CASH SALE
+// ─────────────────────────────────────────────────────────────────
 async function completeCashSale() {
-  const total = getTotal();
+  const total    = getTotal();
   const subtotal = getSubtotal();
-  const given = parseFloat(document.getElementById('cashGiven').value) || 0;
-  const change = given - total;
+  const given    = parseFloat(document.getElementById('cashGiven').value) || 0;
+  const change   = given - total;
+
   const saleData = {
-    items: JSON.stringify(cart),
-    subtotal: subtotal.toString(),
-    discount: discount.toString(),
-    total: total.toString(),
+    items:         JSON.stringify(cart),
+    subtotal:      subtotal.toString(),
+    discount:      discount.toString(),
+    total:         total.toString(),
     paymentMethod: 'cash',
-    cashGiven: given.toString(),
-    change: change.toString(),
-    cashier: 'Cashier',
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    cashGiven:     given.toString(),
+    change:        change.toString(),
+    cashier:       'Cashier',
+    createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
   };
+
   try {
     const ref = await db.collection('sales').add(saleData);
     const batch = db.batch();
     cart.forEach(item => {
       const product = products.find(p => p.id === item.id);
       if (product) {
-        const docRef = db.collection('products').doc(item.id);
-        batch.update(docRef, { stock: Math.max(0, (product.stock || 0) - item.qty) });
+        batch.update(db.collection('products').doc(item.id), {
+          stock: Math.max(0, (product.stock || 0) - item.qty)
+        });
       }
     });
     await batch.commit();
@@ -1178,25 +1321,29 @@ async function completeCashSale() {
     renderCart();
     showToast('✓ Sale completed!', 'success');
   } catch(e) {
-    console.error('Complete sale error:', e);
     showToast('Failed to record sale: ' + e.message, 'error');
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// RECEIPT
+// ─────────────────────────────────────────────────────────────────
 function showReceipt() {
   if (!lastSale) return;
-  const date = new Date().toLocaleString('en-KE');
+  const date  = new Date().toLocaleString('en-KE');
   const lines = [
     '================================',
     `    ${settings.shopName || 'MiniMart'}`,
     settings.shopAddress ? `    ${settings.shopAddress}` : '',
-    settings.shopPhone ? `    ${settings.shopPhone}` : '',
+    settings.shopPhone   ? `    ${settings.shopPhone}`   : '',
     '================================',
     `Date: ${date}`,
     `Till: ${settings.tillNumber || 'TILL001'}`,
     `Cashier: ${lastSale.cashier}`,
     '--------------------------------',
-    ...lastSale.items.map(i => `${i.emoji || ''} ${i.name}\n   ${i.qty} x KSh ${i.price.toLocaleString()} = KSh ${(i.price * i.qty).toLocaleString()}`),
+    ...lastSale.items.map(i =>
+      `${i.emoji || ''} ${i.name}\n   ${i.qty} x KSh ${i.price.toLocaleString()} = KSh ${(i.price * i.qty).toLocaleString()}`
+    ),
     '--------------------------------',
     `Subtotal:   KSh ${Number(lastSale.subtotal).toLocaleString()}`,
     lastSale.discount > 0 ? `Discount:   - KSh ${lastSale.discount}` : '',
@@ -1211,6 +1358,7 @@ function showReceipt() {
     '    Thank you for shopping!',
     '================================',
   ].filter(Boolean).join('\n');
+
   document.getElementById('receiptContent').textContent = lines;
   document.getElementById('receiptModal').classList.remove('hidden');
 }
@@ -1221,43 +1369,30 @@ function printReceipt() {
   const content = document.getElementById('receiptContent').textContent;
   const win = window.open('', '_blank', 'width=302,height=600');
   win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Receipt</title>
-  <style>
-    @page { size: 80mm auto; margin: 4mm; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 72mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; color: #000; background: #fff; }
-    pre { width: 72mm; white-space: pre-wrap; word-break: break-word; }
-  </style>
-</head>
-<body>
-  <pre>${content}</pre>
-  <script>
-    window.onload = function() {
-      setTimeout(function() {
-        window.print();
-        window.onafterprint = function() { window.close(); };
-      }, 250);
-    };
-  <\/script>
-</body>
-</html>`);
+<html><head><meta charset="UTF-8"><title>Receipt</title>
+<style>
+  @page{size:80mm auto;margin:4mm}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:72mm;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#000;background:#fff}
+  pre{width:72mm;white-space:pre-wrap;word-break:break-word}
+</style></head><body>
+<pre>${content}</pre>
+<script>window.onload=function(){setTimeout(function(){window.print();window.onafterprint=function(){window.close()};},250)}<\/script>
+</body></html>`);
   win.document.close();
 }
 
+// ─────────────────────────────────────────────────────────────────
+// REPORTS
+// ─────────────────────────────────────────────────────────────────
 function listenSales() {
   db.collection('sales').orderBy('createdAt', 'desc').limit(200).onSnapshot(snap => {
     allSales = snap.docs.map(d => ({
-      id: d.id,
-      ...d.data(),
+      id: d.id, ...d.data(),
       createdAt: d.data().createdAt?.toDate() || new Date()
     }));
     renderReport(currentReportRange);
-  }, err => {
-    console.error('Sales listener error:', err);
-  });
+  }, err => console.error('Sales listener error:', err));
 }
 
 function loadReport(range, btn) {
@@ -1268,31 +1403,39 @@ function loadReport(range, btn) {
 }
 
 function renderReport(range) {
-  const now = new Date();
-  let start = new Date();
-  if (range === 'today') { start.setHours(0,0,0,0); }
-  else if (range === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
-  else { start.setDate(1); start.setHours(0,0,0,0); }
+  const now   = new Date();
+  let   start = new Date();
+  if (range === 'today')  { start.setHours(0,0,0,0); }
+  else if (range === 'week')  { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+  else                        { start.setDate(1); start.setHours(0,0,0,0); }
+
   const filtered = allSales.filter(s => new Date(s.createdAt) >= start);
-  const revenue = filtered.reduce((s,x) => s + parseFloat(x.total || 0), 0);
-  const mpesa = filtered.filter(s => s.paymentMethod === 'mpesa').length;
+  const revenue  = filtered.reduce((s,x) => s + parseFloat(x.total || 0), 0);
+  const mpesa    = filtered.filter(s => s.paymentMethod === 'mpesa').length;
+
   document.getElementById('statRevenue').textContent = `KSh ${revenue.toLocaleString()}`;
-  document.getElementById('statTx').textContent = filtered.length;
-  document.getElementById('statAvg').textContent = filtered.length ? `KSh ${Math.round(revenue / filtered.length).toLocaleString()}` : 'KSh 0';
-  document.getElementById('statMpesa').textContent = mpesa;
+  document.getElementById('statTx').textContent      = filtered.length;
+  document.getElementById('statAvg').textContent     = filtered.length
+    ? `KSh ${Math.round(revenue / filtered.length).toLocaleString()}` : 'KSh 0';
+  document.getElementById('statMpesa').textContent   = mpesa;
+
   const tbody = document.getElementById('salesTableBody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No sales in this period</td></tr>';
     return;
   }
-  tbody.innerHTML = filtered.slice(0,50).map(s => {
+  tbody.innerHTML = filtered.slice(0, 50).map(s => {
     const items = (() => { try { return JSON.parse(s.items); } catch { return []; } })();
-    const time = s.createdAt instanceof Date ? s.createdAt.toLocaleString('en-KE') : new Date(s.createdAt).toLocaleString('en-KE');
+    const time  = s.createdAt instanceof Date
+      ? s.createdAt.toLocaleString('en-KE')
+      : new Date(s.createdAt).toLocaleString('en-KE');
     return `<tr>
       <td style="white-space:nowrap;font-size:12px">${time}</td>
       <td>${items.length} item(s)</td>
       <td style="font-weight:600">KSh ${parseFloat(s.total || 0).toLocaleString()}</td>
-      <td><span class="${s.paymentMethod === 'mpesa' ? 'badge-mpesa' : 'badge-cash'}">${s.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash'}</span></td>
+      <td><span class="${s.paymentMethod === 'mpesa' ? 'badge-mpesa' : 'badge-cash'}">
+        ${s.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash'}
+      </span></td>
       <td>${s.cashier || 'Cashier'}</td>
     </tr>`;
   }).join('');
@@ -1300,19 +1443,16 @@ function renderReport(range) {
 
 function clearReportsPrompt() {
   showPin(() => {
-    if (!confirm('⚠️ This will permanently delete ALL sales records from Firestore. This cannot be undone.\n\nAre you sure?')) return;
+    if (!confirm('⚠️ This will permanently delete ALL sales records. This cannot be undone.\n\nAre you sure?')) return;
     clearAllReports();
   });
 }
 
 async function clearAllReports() {
   try {
-    showToast('Clearing reports...', 'info');
+    showToast('Clearing reports…', 'info');
     const snap = await db.collection('sales').limit(500).get();
-    if (snap.empty) {
-      showToast('No sales records to clear', 'info');
-      return;
-    }
+    if (snap.empty) { showToast('No sales records to clear', 'info'); return; }
     const batch = db.batch();
     snap.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
@@ -1324,11 +1464,13 @@ async function clearAllReports() {
       showToast('✓ All sales records cleared', 'success');
     }
   } catch(e) {
-    console.error('Clear reports error:', e);
-    showToast('Failed to clear reports: ' + e.message, 'error');
+    showToast('Failed to clear: ' + e.message, 'error');
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// PIN & TABS
+// ─────────────────────────────────────────────────────────────────
 let adminUnlocked = false;
 
 function switchTab(tab) {
@@ -1346,16 +1488,16 @@ function switchTab(tab) {
 
 function showPin(callback) {
   pinCallback = callback;
-  pinValue = '';
+  pinValue    = '';
   updatePinDots();
   document.getElementById('pinError').classList.add('hidden');
   document.getElementById('pinOverlay').classList.remove('hidden');
 }
 
 function pinKey(key) {
-  if (key === 'back') { pinValue = pinValue.slice(0, -1); }
-  else if (key === 'clear') { pinValue = ''; }
-  else if (pinValue.length < 4) { pinValue += key; }
+  if (key === 'back')        pinValue = pinValue.slice(0, -1);
+  else if (key === 'clear')  pinValue = '';
+  else if (pinValue.length < 4) pinValue += key;
   updatePinDots();
   if (pinValue.length === 4) {
     setTimeout(() => {
@@ -1372,19 +1514,21 @@ function pinKey(key) {
 }
 
 function updatePinDots() {
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 4; i++)
     document.getElementById(`dot${i}`).classList.toggle('filled', i < pinValue.length);
-  }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// TOASTS
+// ─────────────────────────────────────────────────────────────────
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
+  const toast     = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => {
-    toast.style.opacity = '0';
+    toast.style.opacity    = '0';
     toast.style.transition = 'opacity 0.3s';
     setTimeout(() => toast.remove(), 300);
   }, 2500);
