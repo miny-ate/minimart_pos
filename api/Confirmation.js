@@ -1,3 +1,9 @@
+export default async function handler(req, res) {
+  // Safaricom pings this URL via GET to verify it's alive
+  if (req.method === 'GET') {
+    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+  }
+  
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
