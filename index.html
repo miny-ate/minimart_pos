@@ -364,6 +364,14 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
 
       <button class="btn-secondary" onclick="cancelMpesaPayment()" style="width:100%">✕ Cancel Payment</button>
+
+      <!-- Manual confirm for testing without Daraja -->
+      <div style="margin-top:10px;padding:10px;border:1px dashed #3d3820;border-radius:8px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔧 Testing mode — no Daraja yet?</div>
+        <button onclick="manualMpesaConfirm()" style="width:100%;padding:10px;background:linear-gradient(135deg,#166534,#15803d);color:white;border-radius:8px;font-weight:700;font-size:14px;border:none;cursor:pointer">
+          ✅ Simulate M-Pesa Payment Received
+        </button>
+      </div>
     </div>
 
     <!-- ── STEP 2: Success (shown after match) ── -->
@@ -1210,6 +1218,30 @@ function startMpesaListener(expectedAmount) {
       console.error('M-Pesa listener error:', err);
       showToast('Payment listener error: ' + err.message, 'error');
     });
+}
+
+  async function manualMpesaConfirm() {
+  // Generate a fake M-Pesa transaction ID
+  const fakeRef = 'TEST' + Math.random().toString(36).substring(2, 9).toUpperCase();
+  const amount  = mpesaOrderTotal;
+
+  try {
+    // Write directly to Firestore — the onSnapshot listener picks it up automatically
+    await db.collection('mpesa_payments').doc(fakeRef).set({
+      reference:    fakeRef,
+      amount:       amount,
+      phone:        '254700000000',
+      accountRef:   settings.tillNumber || 'TILL001',
+      customerName: 'Test Customer',
+      transTime:    new Date().toISOString(),
+      shortCode:    settings.mpesaShortcode || '174379',
+      status:       'pending',
+      receivedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast('✓ Simulated payment sent — confirming…', 'success');
+  } catch(e) {
+    showToast('Simulation error: ' + e.message, 'error');
+  }
 }
 
 function stopMpesaListener() {
