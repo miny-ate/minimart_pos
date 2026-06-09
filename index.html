@@ -1609,41 +1609,64 @@ function closeReceiptModal() { document.getElementById('receiptModal').classList
 
 function printReceipt() {
   const content = document.getElementById('receiptContent').textContent;
-  const existing = document.getElementById('printFrame');
-  if (existing) existing.remove();
+
   const receiptHTML = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Receipt</title>
 <style>
-  @page{size:80mm auto;margin:2mm 4mm}
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:72mm;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.7;color:#000;background:#fff}
-  pre{width:72mm;white-space:pre-wrap;word-break:break-word}
-</style></head><body>
+  @page { size: 80mm auto; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 80mm; font-family: 'Courier New', Courier, monospace; font-size: 11px; line-height: 1.6; color: #000; background: #fff; }
+  pre { width: 78mm; padding: 2mm; white-space: pre-wrap; word-break: break-word; }
+</style>
+</head><body>
 <pre>${content}</pre>
 </body></html>`;
+
+  const old = document.getElementById('printFrame');
+  if (old) old.remove();
+
   const iframe = document.createElement('iframe');
   iframe.id = 'printFrame';
-  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:0;border:none;';
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;top:-10000px;left:-10000px;width:80mm;height:1px;border:none;visibility:hidden;';
   document.body.appendChild(iframe);
-  iframe.contentDocument.open();
-  iframe.contentDocument.write(receiptHTML);
-  iframe.contentDocument.close();
-  iframe.onload = function() {
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(receiptHTML);
+  doc.close();
+
+  const doPrint = () => {
     try {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
-    } catch(e) {
-      const win = window.open('', '_blank', 'width=320,height=600');
+      iframe.contentWindow.onafterprint = () => iframe.remove();
+      setTimeout(() => { try { iframe.remove(); } catch(_){} }, 10000);
+    } catch(err) {
+      iframe.remove();
+      const win = window.open('', '_blank', 'width=340,height=620,toolbar=0,scrollbars=0,status=0');
       if (win) {
         win.document.write(receiptHTML);
         win.document.close();
-        win.onload = function(){ win.print(); win.onafterprint = function(){ win.close(); }; };
-      } else { showToast('Allow popups for this site to print receipts', 'error'); }
+        win.onload = () => {
+          win.focus();
+          win.print();
+          win.onafterprint = () => win.close();
+          setTimeout(() => { try { win.close(); } catch(_){} }, 8000);
+        };
+      } else {
+        showToast('Allow popups in Chrome to enable printing', 'error');
+      }
     }
-    setTimeout(() => { if (iframe) iframe.remove(); }, 5000);
   };
-}
 
+  if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+    doPrint();
+  } else {
+    iframe.onload = doPrint;
+    setTimeout(doPrint, 400);
+  }
+}
 // ─────────────────────────────────────────────────────────────────
 // REPORTS
 // ─────────────────────────────────────────────────────────────────
