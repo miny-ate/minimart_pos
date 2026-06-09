@@ -42,6 +42,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .tab{flex:1;padding:14px;text-align:center;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;margin-bottom:-2px;background:var(--surface)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%);box-shadow:inset 0 -3px 0 var(--accent)}
 .tab:hover{color:var(--brand);background:var(--surface2)}
+.tab.hidden-tab{display:none!important}
 .products-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .scanner-bar{background:linear-gradient(90deg,var(--brand-deep),var(--brand-dark));padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent)}
 .scanner-bar input{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:white;font-family:monospace}
@@ -149,8 +150,25 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .sales-table td{padding:8px;border-bottom:1px solid var(--border)}
 .badge-cash{background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .badge-mpesa{background:#ede9fe;color:var(--brand);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
-.pin-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-deep) 0%,var(--brand-dark) 60%,#6d28d9 100%);display:flex;align-items:center;justify-content:center;z-index:500}
-.pin-card{background:var(--surface);border-radius:24px;padding:32px;width:300px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);border:1px solid var(--border)}
+
+/* ── LOGIN SCREEN ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-deep) 0%,var(--brand-dark) 60%,#6d28d9 100%);display:flex;align-items:center;justify-content:center;z-index:500;padding:16px}
+.login-wrap{width:100%;max-width:480px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .icon{font-size:56px;margin-bottom:10px}
+.login-logo h1{font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px}
+.login-logo p{font-size:14px;color:rgba(255,255,255,0.6);margin-top:4px}
+.login-step-roles{display:flex;flex-direction:column;gap:12px}
+.role-card{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);border-radius:16px;padding:18px 22px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:16px}
+.role-card:hover{background:rgba(201,168,76,0.18);border-color:var(--brand);transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,0.2)}
+.role-icon{font-size:32px;flex-shrink:0}
+.role-info{}
+.role-name{font-size:17px;font-weight:700;color:white}
+.role-desc{font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px}
+.login-step-pin{text-align:center}
+.back-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:20px;cursor:pointer;transition:background 0.2s}
+.back-btn:hover{background:rgba(255,255,255,0.2)}
+.pin-card{background:var(--surface);border-radius:24px;padding:32px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);border:1px solid var(--border)}
 .pin-title{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text)}
 .pin-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
 .pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
@@ -160,13 +178,15 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .pin-key{padding:14px;border-radius:12px;font-size:18px;font-weight:700;background:var(--bg);color:var(--text);border:1px solid var(--border2);transition:all 0.15s}
 .pin-key:hover{background:var(--brand);color:white;border-color:var(--brand);box-shadow:0 4px 12px rgba(124,58,237,0.35)}
 .pin-error{color:#ef4444;font-size:13px;margin-top:10px}
-.receipt{font-family:monospace;font-size:13px;line-height:1.8;background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;white-space:pre-wrap;border:1px solid var(--border)}
-.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
-.toast{padding:12px 16px;border-radius:10px;color:white;font-size:14px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);animation:slideIn 0.3s ease;max-width:300px}
-.toast.success{background:linear-gradient(135deg,var(--brand),var(--brand-dark))}
-.toast.error{background:#ef4444}
-.toast.info{background:linear-gradient(135deg,var(--accent),var(--accent-dark))}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* user badge in header */
+.user-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);padding:5px 12px;border-radius:8px;font-size:13px;font-weight:600;color:white;display:flex;align-items:center;gap:6px}
+.logout-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.35);color:#fca5a5;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.logout-btn:hover{background:rgba(239,68,68,0.35)}
+
+/* cashier info divider in settings */
+.cashier-block{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:12px}
+.cashier-block-title{font-size:13px;font-weight:700;color:var(--muted2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
 
 /* ── M-Pesa waiting spinner ── */
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -186,39 +206,79 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .hidden{display:none!important}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;flex:1}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 </style>
 </head>
 <body>
 
-<div class="toast-container" id="toastContainer"></div>
+<div class="toast-container" id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
 
-<!-- PIN LOCK -->
-<div class="pin-overlay hidden" id="pinOverlay">
-  <div class="pin-card">
-    <div style="font-size:36px;margin-bottom:10px">🔐</div>
-    <div class="pin-title">Admin Access</div>
-    <div class="pin-sub">Enter your 4-digit PIN</div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="dot0"></div>
-      <div class="pin-dot" id="dot1"></div>
-      <div class="pin-dot" id="dot2"></div>
-      <div class="pin-dot" id="dot3"></div>
+<!-- ═══════════════════════════════════════════
+     LOGIN SCREEN (replaces old pin-overlay)
+     ═══════════════════════════════════════════ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="icon">🛒</div>
+      <h1>ClueMart POS</h1>
+      <p id="loginShopSub">Loading…</p>
     </div>
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pinKey('1')">1</button>
-      <button class="pin-key" onclick="pinKey('2')">2</button>
-      <button class="pin-key" onclick="pinKey('3')">3</button>
-      <button class="pin-key" onclick="pinKey('4')">4</button>
-      <button class="pin-key" onclick="pinKey('5')">5</button>
-      <button class="pin-key" onclick="pinKey('6')">6</button>
-      <button class="pin-key" onclick="pinKey('7')">7</button>
-      <button class="pin-key" onclick="pinKey('8')">8</button>
-      <button class="pin-key" onclick="pinKey('9')">9</button>
-      <button class="pin-key" onclick="pinKey('back')" style="font-size:14px">⌫</button>
-      <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key" onclick="pinKey('clear')" style="font-size:12px">CLR</button>
+
+    <!-- Step 1: choose who you are -->
+    <div id="loginStepRoles" class="login-step-roles">
+      <div class="role-card" onclick="selectLoginRole('owner')">
+        <div class="role-icon">👑</div>
+        <div class="role-info">
+          <div class="role-name" id="ownerRoleName">Owner</div>
+          <div class="role-desc">Full access — products, reports, settings</div>
+        </div>
+      </div>
+      <div class="role-card" onclick="selectLoginRole('cashier1')">
+        <div class="role-icon">🧑‍💼</div>
+        <div class="role-info">
+          <div class="role-name" id="cashier1RoleName">Cashier 1</div>
+          <div class="role-desc">POS cashier — sales only</div>
+        </div>
+      </div>
+      <div class="role-card" onclick="selectLoginRole('cashier2')">
+        <div class="role-icon">🧑‍💼</div>
+        <div class="role-info">
+          <div class="role-name" id="cashier2RoleName">Cashier 2</div>
+          <div class="role-desc">POS cashier — sales only</div>
+        </div>
+      </div>
     </div>
-    <div class="pin-error hidden" id="pinError">Wrong PIN. Try again.</div>
+
+    <!-- Step 2: enter PIN -->
+    <div id="loginStepPin" class="login-step-pin hidden">
+      <button class="back-btn" onclick="backToRoles()">← Back</button>
+      <div class="pin-card">
+        <div style="font-size:36px;margin-bottom:10px" id="loginRoleIcon">👑</div>
+        <div class="pin-title" id="loginPinTitle">Owner Access</div>
+        <div class="pin-sub">Enter your 4-digit PIN</div>
+        <div class="pin-dots">
+          <div class="pin-dot" id="ldot0"></div>
+          <div class="pin-dot" id="ldot1"></div>
+          <div class="pin-dot" id="ldot2"></div>
+          <div class="pin-dot" id="ldot3"></div>
+        </div>
+        <div class="pin-keypad">
+          <button class="pin-key" onclick="loginPinKey('1')">1</button>
+          <button class="pin-key" onclick="loginPinKey('2')">2</button>
+          <button class="pin-key" onclick="loginPinKey('3')">3</button>
+          <button class="pin-key" onclick="loginPinKey('4')">4</button>
+          <button class="pin-key" onclick="loginPinKey('5')">5</button>
+          <button class="pin-key" onclick="loginPinKey('6')">6</button>
+          <button class="pin-key" onclick="loginPinKey('7')">7</button>
+          <button class="pin-key" onclick="loginPinKey('8')">8</button>
+          <button class="pin-key" onclick="loginPinKey('9')">9</button>
+          <button class="pin-key" onclick="loginPinKey('back')" style="font-size:14px">⌫</button>
+          <button class="pin-key" onclick="loginPinKey('0')">0</button>
+          <button class="pin-key" onclick="loginPinKey('clear')" style="font-size:12px">CLR</button>
+        </div>
+        <div class="pin-error hidden" id="loginPinError">Wrong PIN. Try again.</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -302,7 +362,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
   <div class="modal">
     <button class="modal-close" onclick="closeReceiptModal()">✕</button>
     <div class="modal-title">🧾 Receipt</div>
-    <div class="receipt" id="receiptContent"></div>
+    <div class="receipt" style="font-family:monospace;font-size:13px;line-height:1.8;background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;white-space:pre-wrap;border:1px solid var(--border)" id="receiptContent"></div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="printReceipt()">🖨️ Print</button>
       <button class="btn-primary" onclick="closeReceiptModal()">Done</button>
@@ -310,32 +370,22 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     M-PESA PAYMENT MODAL  (fully rebuilt)
-     ══════════════════════════════════════════════ -->
+<!-- M-PESA PAYMENT MODAL -->
 <div class="modal-overlay hidden" id="mpesaModal">
   <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="cancelMpesaPayment()">✕</button>
     <div class="modal-title">📱 M-Pesa Payment</div>
-
-    <!-- ── STEP 1: Instructions (shown while waiting) ── -->
     <div id="mpesaStepWaiting">
-
-      <!-- Amount block -->
       <div style="background:linear-gradient(135deg,#1a3a1a,#1e4a1e);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;border:1px solid #2d6a2d">
         <div style="font-size:12px;color:#86efac;font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Amount Due</div>
         <div style="font-size:32px;font-weight:800;color:#4ade80" id="mpesaDue">KSh 0</div>
       </div>
-
-      <!-- Pay-to info -->
       <div class="mpesa-payment-info">
         <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Customer pays to:</div>
         <div class="mpesa-payment-row"><span>Pay Bill / Till</span><span style="font-weight:700;color:var(--text)" id="mpesaShortcodeDisplay">—</span></div>
         <div class="mpesa-payment-row"><span>Account No.</span><span style="font-weight:700;color:var(--text)" id="mpesaAccountDisplay">—</span></div>
         <div class="mpesa-payment-row"><span>Amount</span><span id="mpesaAmountDisplay">KSh 0</span></div>
       </div>
-
-      <!-- Steps -->
       <div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:2.2">
         <div style="font-weight:700;color:var(--text);margin-bottom:4px">Customer steps:</div>
         <div>1️⃣ M-Pesa → Lipa na M-Pesa → Pay Bill</div>
@@ -344,8 +394,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         <div>4️⃣ Enter <strong style="color:#4ade80">exact amount</strong> shown above</div>
         <div>5️⃣ Enter PIN and confirm</div>
       </div>
-
-      <!-- Timeout progress bar -->
       <div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
         <span>Waiting for payment…</span>
         <span id="mpesaCountdown">5:00</span>
@@ -353,8 +401,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       <div class="mpesa-timeout-bar">
         <div class="mpesa-timeout-fill" id="mpesaTimeoutFill" style="width:100%"></div>
       </div>
-
-      <!-- Spinner -->
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px">
         <div class="mpesa-spinner"></div>
         <div>
@@ -362,10 +408,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
           <div class="mpesa-status-sub" id="mpesaStatusSub">System will confirm automatically</div>
         </div>
       </div>
-
       <button class="btn-secondary" onclick="cancelMpesaPayment()" style="width:100%">✕ Cancel Payment</button>
-
-      <!-- Manual confirm for testing without Daraja -->
       <div style="margin-top:10px;padding:10px;border:1px dashed #3d3820;border-radius:8px;text-align:center">
         <div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔧 No Daraja yet? Simulate payment:</div>
         <button onclick="manualMpesaConfirm()" style="width:100%;padding:10px;background:linear-gradient(135deg,#166534,#15803d);color:white;border-radius:8px;font-weight:700;font-size:14px;border:none;cursor:pointer">
@@ -373,8 +416,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         </button>
       </div>
     </div>
-
-    <!-- ── STEP 2: Success (shown after match) ── -->
     <div id="mpesaStepSuccess" class="hidden">
       <div style="text-align:center;padding:20px 0">
         <div style="font-size:64px;margin-bottom:10px">✅</div>
@@ -389,7 +430,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         <div style="font-size:13px;color:var(--muted)">Completing sale…</div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -429,6 +469,8 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
   <div style="display:flex;align-items:center;gap:10px">
     <span class="low-stock-badge hidden" id="lowStockBadge">0 Low Stock</span>
     <span class="low-stock-badge hidden" id="outStockBadge" style="background:#7c3aed">0 Out of Stock</span>
+    <div class="user-badge hidden" id="userBadge">👤 <span id="userBadgeName"></span></div>
+    <button class="logout-btn hidden" id="logoutBtn" onclick="logout()">🚪 Logout</button>
     <div class="header-clock" id="clock">00:00:00</div>
   </div>
 </div>
@@ -461,7 +503,6 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
     </div>
   </div>
-
   <div class="cart-panel">
     <div class="cart-header">
       <div class="cart-title">🛒 Cart <span class="cart-count" id="cartCount">0</span></div>
@@ -542,11 +583,47 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         <div class="form-group"><label class="form-label">Address</label><input id="settingAddress" placeholder="Nairobi, Kenya"></div>
         <div class="form-group"><label class="form-label">Phone</label><input id="settingPhone" placeholder="+254 700 000000"></div>
       </div>
-      <div class="form-group"><label class="form-label">Admin PIN (4 digits)</label><input id="settingPin" type="password" maxlength="4" placeholder="1234"></div>
       <div class="settings-actions">
         <button class="save-btn" onclick="saveShopSettings()">Save Shop Settings</button>
       </div>
     </div>
+
+    <!-- ── USER / PIN MANAGEMENT ── -->
+    <div class="settings-section">
+      <div class="settings-title">👥 User Management & PINs</div>
+
+      <div class="cashier-block">
+        <div class="cashier-block-title">👑 Owner</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Display Name</label><input id="settingOwnerName" placeholder="Owner"></div>
+          <div class="form-group"><label class="form-label">PIN (4 digits)</label><input id="settingOwnerPin" type="password" maxlength="4" placeholder="1234"></div>
+        </div>
+      </div>
+
+      <div class="cashier-block">
+        <div class="cashier-block-title">🧑‍💼 Cashier 1</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name</label><input id="settingCashier1Name" placeholder="Cashier 1"></div>
+          <div class="form-group"><label class="form-label">PIN (4 digits)</label><input id="settingCashier1Pin" type="password" maxlength="4" placeholder="0000"></div>
+        </div>
+      </div>
+
+      <div class="cashier-block">
+        <div class="cashier-block-title">🧑‍💼 Cashier 2</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name</label><input id="settingCashier2Name" placeholder="Cashier 2"></div>
+          <div class="form-group"><label class="form-label">PIN (4 digits)</label><input id="settingCashier2Pin" type="password" maxlength="4" placeholder="0000"></div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);margin-top:4px">
+        ℹ️ Cashiers can only access the POS tab. They cannot manage products, view reports, or change settings.
+      </div>
+      <div class="settings-actions">
+        <button class="save-btn" onclick="saveUserSettings()">Save User Settings</button>
+      </div>
+    </div>
+
     <div class="settings-section">
       <div class="settings-title">📱 M-Pesa (Daraja) Settings</div>
       <div class="form-row">
@@ -572,6 +649,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         <button class="save-btn" onclick="saveMpesaSettings()">Save M-Pesa Settings</button>
       </div>
     </div>
+
     <div class="settings-section">
       <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px">
         <div class="settings-title" style="border:none;padding:0;margin:0">📦 Product Management</div>
@@ -602,20 +680,23 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
 db.enablePersistence().catch(err => console.warn('Offline persistence unavailable:', err.code));
 
+// ─────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────
 let products = [];
 let cart = [];
 let discount = 0;
 let paymentMethod = 'cash';
 let settings = {
-  shopName:'My Shop', tillNumber:'TILL001', adminPin:'1234',
-  shopAddress:'Nairobi, Kenya', shopPhone:'+254 700 000000'
+  shopName:'My Shop', tillNumber:'TILL001',
+  shopAddress:'Nairobi, Kenya', shopPhone:'+254 700 000000',
+  ownerName:'Owner',         ownerPin:'1234',
+  cashier1Name:'Cashier 1', cashier1Pin:'0000',
+  cashier2Name:'Cashier 2', cashier2Pin:'0000',
 };
 let editingProductId = null;
-let pinCallback = null;
-let pinValue = '';
 let activeTab = 'pos';
 let searchQuery = '';
 let activeCategory = 'all';
@@ -623,23 +704,34 @@ let lastSale = null;
 let currentReportRange = 'today';
 let allSales = [];
 
-// ── M-Pesa polling state ──────────────────────────────────────────
-let mpesaListener = null;      // Firestore unsubscribe fn
-let mpesaTimer = null;         // countdown interval
-let mpesaTimeoutHandle = null; // auto-cancel timeout
-let mpesaOrderTotal = 0;       // amount we're waiting for
-const MPESA_TIMEOUT_SECS = 300; // 5 minutes
+// ── Current logged-in user ──
+// { role: 'owner'|'cashier1'|'cashier2', name: string }
+let currentUser = null;
 
+// ── Login flow state ──
+let loginRole = null;   // which role card was clicked
+let loginPin  = '';
+
+// ── M-Pesa polling state ──
+let mpesaListener      = null;
+let mpesaTimer         = null;
+let mpesaTimeoutHandle = null;
+let mpesaOrderTotal    = 0;
+const MPESA_TIMEOUT_SECS = 300;
+
+// ─────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────
 async function init() {
   startClock();
   const apiBase = window.location.origin + '/api';
   const el = document.getElementById('confirmUrlDisplay');
-  if (el) {
-    el.innerHTML = '<b>Confirmation:</b> ' + apiBase + '/confirm<br><b>Validation:</b> ' + apiBase + '/validate';
-  }
+  if (el) el.innerHTML = '<b>Confirmation:</b> ' + apiBase + '/confirm<br><b>Validation:</b> ' + apiBase + '/validate';
+
   await loadSettings();
   listenProducts();
   listenSales();
+  showLoginScreen();
 }
 
 function startClock() {
@@ -648,6 +740,129 @@ function startClock() {
   }, 1000);
 }
 
+// ─────────────────────────────────────────────────────────────────
+// LOGIN / LOGOUT
+// ─────────────────────────────────────────────────────────────────
+function showLoginScreen() {
+  // Update role card names from settings
+  document.getElementById('ownerRoleName').textContent    = settings.ownerName    || 'Owner';
+  document.getElementById('cashier1RoleName').textContent = settings.cashier1Name || 'Cashier 1';
+  document.getElementById('cashier2RoleName').textContent = settings.cashier2Name || 'Cashier 2';
+  document.getElementById('loginShopSub').textContent     =
+    `${settings.shopName || 'My Shop'} • ${settings.tillNumber || 'TILL001'}`;
+
+  // Show login, hide app chrome
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.add('hidden');
+  document.getElementById('userBadge').classList.add('hidden');
+
+  // Reset login steps
+  backToRoles();
+  currentUser = null;
+
+  // Hide reports & settings tabs (they'll be shown after owner login)
+  applyTabVisibility();
+}
+
+function selectLoginRole(role) {
+  loginRole = role;
+  loginPin  = '';
+
+  const icons = { owner:'👑', cashier1:'🧑‍💼', cashier2:'🧑‍💼' };
+  const names = {
+    owner:    settings.ownerName    || 'Owner',
+    cashier1: settings.cashier1Name || 'Cashier 1',
+    cashier2: settings.cashier2Name || 'Cashier 2',
+  };
+
+  document.getElementById('loginRoleIcon').textContent = icons[role];
+  document.getElementById('loginPinTitle').textContent  = names[role] + ' — Enter PIN';
+  document.getElementById('loginPinError').classList.add('hidden');
+  updateLoginPinDots();
+
+  document.getElementById('loginStepRoles').classList.add('hidden');
+  document.getElementById('loginStepPin').classList.remove('hidden');
+}
+
+function backToRoles() {
+  loginRole = null;
+  loginPin  = '';
+  document.getElementById('loginStepRoles').classList.remove('hidden');
+  document.getElementById('loginStepPin').classList.add('hidden');
+  document.getElementById('loginPinError').classList.add('hidden');
+}
+
+function loginPinKey(key) {
+  if (key === 'back')       loginPin = loginPin.slice(0, -1);
+  else if (key === 'clear') loginPin = '';
+  else if (loginPin.length < 4) loginPin += key;
+  updateLoginPinDots();
+
+  if (loginPin.length === 4) {
+    setTimeout(() => attemptLogin(), 150);
+  }
+}
+
+function updateLoginPinDots() {
+  for (let i = 0; i < 4; i++)
+    document.getElementById(`ldot${i}`).classList.toggle('filled', i < loginPin.length);
+}
+
+function attemptLogin() {
+  const pinMap = {
+    owner:    settings.ownerPin    || '1234',
+    cashier1: settings.cashier1Pin || '0000',
+    cashier2: settings.cashier2Pin || '0000',
+  };
+  const nameMap = {
+    owner:    settings.ownerName    || 'Owner',
+    cashier1: settings.cashier1Name || 'Cashier 1',
+    cashier2: settings.cashier2Name || 'Cashier 2',
+  };
+
+  if (loginPin === pinMap[loginRole]) {
+    currentUser = { role: loginRole, name: nameMap[loginRole] };
+    document.getElementById('loginOverlay').classList.add('hidden');
+
+    // Show user badge & logout
+    document.getElementById('userBadgeName').textContent = currentUser.name;
+    document.getElementById('userBadge').classList.remove('hidden');
+    document.getElementById('logoutBtn').classList.remove('hidden');
+
+    // Apply tab & feature visibility based on role
+    applyTabVisibility();
+
+    // Always land on POS
+    switchTab('pos');
+    showToast(`Welcome, ${currentUser.name}!`, 'success');
+  } else {
+    document.getElementById('loginPinError').classList.remove('hidden');
+    loginPin = '';
+    updateLoginPinDots();
+  }
+}
+
+function logout() {
+  if (!confirm('Log out of this session?')) return;
+  cart = [];
+  discount = 0;
+  document.getElementById('discountInput').value = 0;
+  renderCart();
+  showLoginScreen();
+}
+
+function isOwner() { return currentUser && currentUser.role === 'owner'; }
+
+/** Show/hide tabs and admin-only controls based on current user role */
+function applyTabVisibility() {
+  const owner = isOwner();
+  document.getElementById('tab-reports').classList.toggle('hidden-tab', !owner);
+  document.getElementById('tab-settings').classList.toggle('hidden-tab', !owner);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────────────────────────
 async function loadSettings() {
   try {
     const doc = await db.collection('settings').doc('main').get();
@@ -662,11 +877,22 @@ async function loadSettings() {
 function applySettings() {
   document.getElementById('headerSub').textContent =
     `${settings.shopName || 'My Shop'} • ${settings.tillNumber || 'TILL001'}`;
+
+  // Shop info fields
   document.getElementById('settingShopName').value  = settings.shopName    || '';
   document.getElementById('settingTill').value      = settings.tillNumber  || '';
   document.getElementById('settingAddress').value   = settings.shopAddress || '';
   document.getElementById('settingPhone').value     = settings.shopPhone   || '';
-  document.getElementById('settingPin').value       = settings.adminPin    || '';
+
+  // User/PIN fields
+  document.getElementById('settingOwnerName').value     = settings.ownerName    || '';
+  document.getElementById('settingOwnerPin').value      = settings.ownerPin     || '';
+  document.getElementById('settingCashier1Name').value  = settings.cashier1Name || '';
+  document.getElementById('settingCashier1Pin').value   = settings.cashier1Pin  || '';
+  document.getElementById('settingCashier2Name').value  = settings.cashier2Name || '';
+  document.getElementById('settingCashier2Pin').value   = settings.cashier2Pin  || '';
+
+  // M-Pesa
   document.getElementById('settingMpesaKey').value      = settings.mpesaKey       || '';
   document.getElementById('settingMpesaSecret').value   = settings.mpesaSecret    || '';
   document.getElementById('settingMpesaShortcode').value= settings.mpesaShortcode || '';
@@ -679,18 +905,42 @@ async function saveShopSettings() {
   const tillNumber  = document.getElementById('settingTill').value;
   const shopAddress = document.getElementById('settingAddress').value;
   const shopPhone   = document.getElementById('settingPhone').value;
-  const adminPin    = document.getElementById('settingPin').value;
-  settings = { ...settings, shopName, tillNumber, shopAddress, shopPhone, adminPin };
+  settings = { ...settings, shopName, tillNumber, shopAddress, shopPhone };
   applySettings();
   try {
     await db.collection('settings').doc('main').set(
-      { shopName, tillNumber, shopAddress, shopPhone, adminPin, lastUpdated: new Date() },
+      { shopName, tillNumber, shopAddress, shopPhone, lastUpdated: new Date() },
       { merge: true }
     );
     showToast('✓ Shop settings saved!', 'success');
-  } catch (e) {
-    showToast('Error saving: ' + e.message, 'error');
+  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
+}
+
+async function saveUserSettings() {
+  const ownerName    = document.getElementById('settingOwnerName').value.trim()    || 'Owner';
+  const ownerPin     = document.getElementById('settingOwnerPin').value.trim();
+  const cashier1Name = document.getElementById('settingCashier1Name').value.trim() || 'Cashier 1';
+  const cashier1Pin  = document.getElementById('settingCashier1Pin').value.trim();
+  const cashier2Name = document.getElementById('settingCashier2Name').value.trim() || 'Cashier 2';
+  const cashier2Pin  = document.getElementById('settingCashier2Pin').value.trim();
+
+  // Validate PINs
+  const pins = [ownerPin, cashier1Pin, cashier2Pin].filter(Boolean);
+  for (const p of pins) {
+    if (!/^\d{4}$/.test(p)) { showToast('PINs must be exactly 4 digits', 'error'); return; }
   }
+  settings = { ...settings, ownerName, ownerPin, cashier1Name, cashier1Pin, cashier2Name, cashier2Pin };
+  try {
+    await db.collection('settings').doc('main').set(
+      { ownerName, ownerPin, cashier1Name, cashier1Pin, cashier2Name, cashier2Pin, lastUpdated: new Date() },
+      { merge: true }
+    );
+    showToast('✓ User settings saved!', 'success');
+    // Update login screen role names live
+    document.getElementById('ownerRoleName').textContent    = ownerName;
+    document.getElementById('cashier1RoleName').textContent = cashier1Name;
+    document.getElementById('cashier2RoleName').textContent = cashier2Name;
+  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
 }
 
 async function saveMpesaSettings() {
@@ -706,9 +956,7 @@ async function saveMpesaSettings() {
       { merge: true }
     );
     showToast('✓ M-Pesa settings saved!', 'success');
-  } catch (e) {
-    showToast('Error saving: ' + e.message, 'error');
-  }
+  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -818,7 +1066,7 @@ function renderProductsTable() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// PRODUCT MODAL
+// PRODUCT MODAL (owner only — accessed via Settings tab which is owner-only)
 // ─────────────────────────────────────────────────────────────────
 function openAddProduct() {
   editingProductId = null;
@@ -894,9 +1142,7 @@ async function deleteProduct(id) {
   try {
     await db.collection('products').doc(id).delete();
     showToast('Product deleted', 'info');
-  } catch(e) {
-    showToast('Failed to delete: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Failed to delete: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -942,22 +1188,21 @@ async function confirmRestock() {
     });
     showToast(`✓ Added ${qty} units to ${p.name}`, 'success');
     closeRestockModal();
-  } catch(e) {
-    showToast('Restock failed: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Restock failed: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────────
 // BARCODE SCANNER
 // ─────────────────────────────────────────────────────────────────
 let barcodeBuffer = '';
-let barcodeTimer = null;
-let lastKeyTime = 0;
+let barcodeTimer  = null;
+let lastKeyTime   = 0;
 const SCANNER_SPEED_MS = 50;
 
 document.addEventListener('keydown', e => {
   if (activeTab !== 'pos') return;
   if (document.querySelector('.modal-overlay:not(.hidden)')) return;
+  if (document.getElementById('loginOverlay') && !document.getElementById('loginOverlay').classList.contains('hidden')) return;
   const now = Date.now();
   const timeSinceLast = now - lastKeyTime;
   lastKeyTime = now;
@@ -1124,7 +1369,7 @@ function updateChange() {
 function closeCashModal() { document.getElementById('cashModal').classList.add('hidden'); }
 
 // ─────────────────────────────────────────────────────────────────
-// M-PESA — open modal & start polling
+// M-PESA
 // ─────────────────────────────────────────────────────────────────
 function openMpesaModal() {
   const total      = getTotal();
@@ -1132,16 +1377,15 @@ function openMpesaModal() {
   const tillNo     = settings.tillNumber     || 'TILL001';
   mpesaOrderTotal  = total;
 
-  // Reset UI to waiting state
   document.getElementById('mpesaStepWaiting').classList.remove('hidden');
   document.getElementById('mpesaStepSuccess').classList.add('hidden');
-  document.getElementById('mpesaDue').textContent           = `KSh ${total.toLocaleString()}`;
+  document.getElementById('mpesaDue').textContent              = `KSh ${total.toLocaleString()}`;
   document.getElementById('mpesaShortcodeDisplay').textContent = shortcode;
-  document.getElementById('mpesaAccountDisplay').textContent  = tillNo;
-  document.getElementById('mpesaAmountDisplay').textContent   = `KSh ${total.toLocaleString()}`;
-  document.getElementById('mpesaStatusText').textContent      = 'Awaiting payment…';
-  document.getElementById('mpesaStatusSub').textContent       = 'System will confirm automatically';
-  document.getElementById('mpesaTimeoutFill').style.width     = '100%';
+  document.getElementById('mpesaAccountDisplay').textContent   = tillNo;
+  document.getElementById('mpesaAmountDisplay').textContent    = `KSh ${total.toLocaleString()}`;
+  document.getElementById('mpesaStatusText').textContent       = 'Awaiting payment…';
+  document.getElementById('mpesaStatusSub').textContent        = 'System will confirm automatically';
+  document.getElementById('mpesaTimeoutFill').style.width      = '100%';
   document.getElementById('mpesaModal').classList.remove('hidden');
 
   startMpesaCountdown();
@@ -1159,8 +1403,7 @@ function startMpesaCountdown() {
     document.getElementById('mpesaTimeoutFill').style.width = pct + '%';
     const mins = Math.floor(secsLeft / 60);
     const secs = secsLeft % 60;
-    document.getElementById('mpesaCountdown').textContent =
-      `${mins}:${String(secs).padStart(2,'0')}`;
+    document.getElementById('mpesaCountdown').textContent = `${mins}:${String(secs).padStart(2,'0')}`;
     if (secsLeft <= 0) {
       clearInterval(mpesaTimer);
       stopMpesaListener();
@@ -1175,17 +1418,8 @@ function startMpesaCountdown() {
   }, MPESA_TIMEOUT_SECS * 1000);
 }
 
-/**
- * Listen to mpesa_payments collection for a doc matching the exact amount
- * with status == 'pending'. When found, auto-complete the sale.
- *
- * The Cloud Function writes to:
- *   db.collection('mpesa_payments').doc(TransID).set({ amount, phone, ... status:'pending' })
- */
 function startMpesaListener(expectedAmount) {
-  stopMpesaListener(); // clear any previous listener
-
-  // Look back 10 minutes max to avoid matching old payments
+  stopMpesaListener();
   const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
 
   mpesaListener = db.collection('mpesa_payments')
@@ -1193,23 +1427,14 @@ function startMpesaListener(expectedAmount) {
     .where('status', '==', 'pending')
     .where('receivedAt', '>=', tenMinsAgo)
     .onSnapshot(async snap => {
-      if (snap.empty) return; // nothing yet — keep waiting
-
-      // Take the first matching payment
+      if (snap.empty) return;
       const payDoc  = snap.docs[0];
       const payment = payDoc.data();
-
-      // Stop polling immediately
       stopMpesaListener();
-
-      // Mark as matched in Firestore
       try {
         await db.collection('mpesa_payments').doc(payDoc.id).update({ status: 'matched' });
-      } catch(e) {
-        console.warn('Could not mark payment as matched:', e);
-      }
+      } catch(e) { console.warn('Could not mark payment as matched:', e); }
 
-      // Show success screen
       document.getElementById('mpesaStepWaiting').classList.add('hidden');
       document.getElementById('mpesaStepSuccess').classList.remove('hidden');
       document.getElementById('confirmedRef').textContent    = payment.reference   || payDoc.id;
@@ -1217,7 +1442,6 @@ function startMpesaListener(expectedAmount) {
       document.getElementById('confirmedPhone').textContent  = payment.phone        || '—';
       document.getElementById('confirmedAmount').textContent = `KSh ${payment.amount.toLocaleString()}`;
 
-      // Auto-complete sale after 1.5s so cashier sees the success screen
       setTimeout(() => completeMpesaSale(payment), 1500);
     }, err => {
       console.error('M-Pesa listener error:', err);
@@ -1230,25 +1454,19 @@ async function manualMpesaConfirm() {
   const amount  = mpesaOrderTotal;
   try {
     await db.collection('mpesa_payments').doc(fakeRef).set({
-      reference:    fakeRef,
-      amount:       amount,
-      phone:        '254700000000',
-      accountRef:   settings.tillNumber || 'TILL001',
-      customerName: 'Test Customer',
-      transTime:    new Date().toISOString(),
-      shortCode:    settings.mpesaShortcode || '174379',
-      status:       'pending',
-      receivedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      reference: fakeRef, amount, phone: '254700000000',
+      accountRef: settings.tillNumber || 'TILL001',
+      customerName: 'Test Customer', transTime: new Date().toISOString(),
+      shortCode: settings.mpesaShortcode || '174379',
+      status: 'pending', receivedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     showToast('✓ Simulated payment sent — confirming…', 'success');
-  } catch(e) {
-    showToast('Simulation error: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Simulation error: ' + e.message, 'error'); }
 }
 
 function stopMpesaListener() {
-  if (mpesaListener) { mpesaListener(); mpesaListener = null; }
-  if (mpesaTimer)    { clearInterval(mpesaTimer);   mpesaTimer = null; }
+  if (mpesaListener)      { mpesaListener(); mpesaListener = null; }
+  if (mpesaTimer)         { clearInterval(mpesaTimer); mpesaTimer = null; }
   if (mpesaTimeoutHandle) { clearTimeout(mpesaTimeoutHandle); mpesaTimeoutHandle = null; }
 }
 
@@ -1260,27 +1478,26 @@ function cancelMpesaPayment() {
 async function completeMpesaSale(payment) {
   const total    = mpesaOrderTotal;
   const subtotal = getSubtotal();
+  const cashierName = currentUser ? currentUser.name : 'Cashier';
 
   const saleData = {
-    items:         JSON.stringify(cart),
-    subtotal:      subtotal.toString(),
-    discount:      discount.toString(),
-    total:         total.toString(),
-    paymentMethod: 'mpesa',
-    mpesaRef:      payment.reference || payment.transID || '',
-    mpesaPhone:    payment.phone     || '',
-    mpesaCustomer: payment.customerName || '',
-    mpesaShortcode:settings.mpesaShortcode || '',
-    cashGiven:     total.toString(),
-    change:        '0',
-    cashier:       settings.tillNumber || 'TILL001',
-    createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
+    items:          JSON.stringify(cart),
+    subtotal:       subtotal.toString(),
+    discount:       discount.toString(),
+    total:          total.toString(),
+    paymentMethod:  'mpesa',
+    mpesaRef:       payment.reference || payment.transID || '',
+    mpesaPhone:     payment.phone     || '',
+    mpesaCustomer:  payment.customerName || '',
+    mpesaShortcode: settings.mpesaShortcode || '',
+    cashGiven:      total.toString(),
+    change:         '0',
+    cashier:        cashierName,
+    createdAt:      firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   try {
     const docRef = await db.collection('sales').add(saleData);
-
-    // Deduct stock
     const batch = db.batch();
     cart.forEach(item => {
       const product = products.find(p => p.id === item.id);
@@ -1291,17 +1508,9 @@ async function completeMpesaSale(payment) {
       }
     });
     await batch.commit();
-
-    lastSale = {
-      id: docRef.id, ...saleData,
-      items: cart, total, subtotal, discount,
-      cashGiven: total, change: 0,
-      mpesaRef: payment.reference || ''
-    };
-
+    lastSale = { id: docRef.id, ...saleData, items: cart, total, subtotal, discount, cashGiven: total, change: 0, mpesaRef: payment.reference || '' };
     document.getElementById('mpesaModal').classList.add('hidden');
     showReceipt();
-
     cart = [];
     discount = 0;
     document.getElementById('discountInput').value = 0;
@@ -1321,6 +1530,7 @@ async function completeCashSale() {
   const subtotal = getSubtotal();
   const given    = parseFloat(document.getElementById('cashGiven').value) || 0;
   const change   = given - total;
+  const cashierName = currentUser ? currentUser.name : 'Cashier';
 
   const saleData = {
     items:         JSON.stringify(cart),
@@ -1330,7 +1540,7 @@ async function completeCashSale() {
     paymentMethod: 'cash',
     cashGiven:     given.toString(),
     change:        change.toString(),
-    cashier:       'Cashier',
+    cashier:       cashierName,
     createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -1354,9 +1564,7 @@ async function completeCashSale() {
     document.getElementById('discountInput').value = 0;
     renderCart();
     showToast('✓ Sale completed!', 'success');
-  } catch(e) {
-    showToast('Failed to record sale: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Failed to record sale: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1430,9 +1638,7 @@ function printReceipt() {
         win.document.write(receiptHTML);
         win.document.close();
         win.onload = function(){ win.print(); win.onafterprint = function(){ win.close(); }; };
-      } else {
-        showToast('Allow popups for this site to print receipts', 'error');
-      }
+      } else { showToast('Allow popups for this site to print receipts', 'error'); }
     }
     setTimeout(() => { if (iframe) iframe.remove(); }, 5000);
   };
@@ -1461,9 +1667,9 @@ function loadReport(range, btn) {
 function renderReport(range) {
   const now   = new Date();
   let   start = new Date();
-  if (range === 'today')  { start.setHours(0,0,0,0); }
-  else if (range === 'week')  { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
-  else                        { start.setDate(1); start.setHours(0,0,0,0); }
+  if (range === 'today')     { start.setHours(0,0,0,0); }
+  else if (range === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+  else                       { start.setDate(1); start.setHours(0,0,0,0); }
 
   const filtered = allSales.filter(s => new Date(s.createdAt) >= start);
   const revenue  = filtered.reduce((s,x) => s + parseFloat(x.total || 0), 0);
@@ -1498,10 +1704,9 @@ function renderReport(range) {
 }
 
 function clearReportsPrompt() {
-  showPin(() => {
-    if (!confirm('⚠️ This will permanently delete ALL sales records. This cannot be undone.\n\nAre you sure?')) return;
-    clearAllReports();
-  });
+  if (!isOwner()) { showToast('Owner access required', 'error'); return; }
+  if (!confirm('⚠️ This will permanently delete ALL sales records. This cannot be undone.\n\nAre you sure?')) return;
+  clearAllReports();
 }
 
 async function clearAllReports() {
@@ -1519,19 +1724,16 @@ async function clearAllReports() {
       renderReport(currentReportRange);
       showToast('✓ All sales records cleared', 'success');
     }
-  } catch(e) {
-    showToast('Failed to clear: ' + e.message, 'error');
-  }
+  } catch(e) { showToast('Failed to clear: ' + e.message, 'error'); }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// PIN & TABS
+// TABS — role-aware
 // ─────────────────────────────────────────────────────────────────
-let adminUnlocked = false;
-
 function switchTab(tab) {
-  if ((tab === 'settings' || tab === 'reports') && !adminUnlocked) {
-    showPin(() => { adminUnlocked = true; switchTab(tab); });
+  // Cashiers may only access POS
+  if ((tab === 'settings' || tab === 'reports') && !isOwner()) {
+    showToast('Owner access required', 'error');
     return;
   }
   activeTab = tab;
@@ -1539,39 +1741,6 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`page-${tab}`).classList.add('active');
-  if (tab === 'pos') adminUnlocked = false;
-}
-
-function showPin(callback) {
-  pinCallback = callback;
-  pinValue    = '';
-  updatePinDots();
-  document.getElementById('pinError').classList.add('hidden');
-  document.getElementById('pinOverlay').classList.remove('hidden');
-}
-
-function pinKey(key) {
-  if (key === 'back')        pinValue = pinValue.slice(0, -1);
-  else if (key === 'clear')  pinValue = '';
-  else if (pinValue.length < 4) pinValue += key;
-  updatePinDots();
-  if (pinValue.length === 4) {
-    setTimeout(() => {
-      if (pinValue === (settings.adminPin || '1234')) {
-        document.getElementById('pinOverlay').classList.add('hidden');
-        if (pinCallback) pinCallback();
-      } else {
-        document.getElementById('pinError').classList.remove('hidden');
-        pinValue = '';
-        updatePinDots();
-      }
-    }, 200);
-  }
-}
-
-function updatePinDots() {
-  for (let i = 0; i < 4; i++)
-    document.getElementById(`dot${i}`).classList.toggle('filled', i < pinValue.length);
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1580,7 +1749,9 @@ function updatePinDots() {
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast     = document.createElement('div');
-  toast.className = `toast ${type}`;
+  toast.style.cssText = 'padding:12px 16px;border-radius:10px;color:white;font-size:14px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);animation:slideIn 0.3s ease;max-width:300px';
+  const colors = { success:'linear-gradient(135deg,#c9a84c,#a07830)', error:'#ef4444', info:'linear-gradient(135deg,#e8c97a,#c9a84c)' };
+  toast.style.background = colors[type] || colors.info;
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => {
