@@ -204,6 +204,11 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 .mpesa-payment-row:last-child{margin-bottom:0;font-weight:700;font-size:15px;color:#4ade80;border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
 
 .hidden{display:none!important}
+.expense-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:8px;background:var(--surface2);border:1px solid var(--border);transition:background 0.15s}
+.expense-row:hover{background:var(--border)}
+.expense-cat-badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(201,168,76,0.15);color:var(--brand);border:1px solid rgba(201,168,76,0.3);white-space:nowrap}
+.expense-del-btn{background:none;color:#ef4444;font-size:16px;padding:2px 6px;flex-shrink:0;opacity:0.6;transition:opacity 0.2s}
+.expense-del-btn:hover{opacity:1}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;flex:1}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -410,9 +415,9 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
       <button class="btn-secondary" onclick="cancelMpesaPayment()" style="width:100%">✕ Cancel Payment</button>
       <div style="margin-top:10px;padding:10px;border:1px dashed #3d3820;border-radius:8px;text-align:center">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔧 No Daraja yet? Simulate payment:</div>
         <button onclick="manualMpesaConfirm()" style="width:100%;padding:10px;background:linear-gradient(135deg,#166534,#15803d);color:white;border-radius:8px;font-weight:700;font-size:14px;border:none;cursor:pointer">
-          Payment Received
+          ✅ Simulate M-Pesa Payment Received
         </button>
       </div>
     </div>
@@ -479,6 +484,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
 <div class="tabs">
   <div class="tab active" id="tab-pos" onclick="switchTab('pos')">🛒 Point of Sale</div>
   <div class="tab" id="tab-reports" onclick="switchTab('reports')">▦ Reports</div>
+  <div class="tab" id="tab-expenses" onclick="switchTab('expenses')">💸 Expenses</div>
   <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙ Settings</div>
 </div>
 
@@ -553,9 +559,22 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
     </div>
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" id="statRevenue">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">Gross Profit</div><div class="stat-value" id="statAvg">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">Expenses</div><div class="stat-value" id="statExpenses" style="color:#ef4444">KSh 0</div></div>
+      <div class="stat-card" style="border-color:var(--brand)"><div class="stat-label" style="color:var(--brand)">Net Profit</div><div class="stat-value" id="statNetProfit" style="color:var(--brand)">KSh 0</div></div>
       <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="statTx">0</div></div>
-      <div class="stat-card"><div class="stat-label">Profit</div><div class="stat-value" id="statAvg">KSh 0</div></div>
       <div class="stat-card"><div class="stat-label">M-Pesa Sales</div><div class="stat-value" id="statMpesa">0</div></div>
+    </div>
+
+    <!-- Cashier Breakdown -->
+    <div class="sales-table" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:15px;margin-bottom:12px">👤 Cashier Breakdown</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Cashier</th><th>Sales</th><th>Revenue</th><th>Cash</th><th>M-Pesa</th></tr></thead>
+          <tbody id="cashierBreakdownBody"><tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No data</td></tr></tbody>
+        </table>
+      </div>
     </div>
     <div class="sales-table">
       <div style="font-weight:700;font-size:15px;margin-bottom:12px">Recent Sales</div>
@@ -568,6 +587,106 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
         </table>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- SHIFT SUMMARY MODAL -->
+<div class="modal-overlay hidden" id="shiftModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title" style="text-align:center">👋 End of Shift</div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:8px" id="shiftUserIcon">🧑‍💼</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text)" id="shiftUserName">Cashier</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px" id="shiftTimeRange">—</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;border:1px solid var(--border);text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Total Sales</div>
+        <div style="font-size:22px;font-weight:800;color:var(--brand)" id="shiftTotalSales">KSh 0</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;border:1px solid var(--border);text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Transactions</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text)" id="shiftTxCount">0</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;border:1px solid var(--border);text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">💵 Cash</div>
+        <div style="font-size:20px;font-weight:800;color:#f59e0b" id="shiftCashTotal">KSh 0</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;border:1px solid var(--border);text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">📱 M-Pesa</div>
+        <div style="font-size:20px;font-weight:800;color:#4ade80" id="shiftMpesaTotal">KSh 0</div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:16px;border:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Top Items Sold</div>
+      <div id="shiftTopItems" style="font-size:13px;color:var(--text)">—</div>
+    </div>
+    <button class="btn-primary" onclick="confirmLogout()" style="width:100%;padding:13px;font-size:15px">✓ Done — Log Out</button>
+  </div>
+</div>
+
+<!-- EXPENSES PAGE -->
+<div class="page" id="page-expenses">
+  <div class="settings-page">
+
+    <!-- Add Expense -->
+    <div class="settings-section">
+      <div class="settings-title">➕ Log New Expense</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="expenseCategory">
+            <option value="Rent">🏠 Rent</option>
+            <option value="Electricity">💡 Electricity</option>
+            <option value="Water">💧 Water</option>
+            <option value="Supplier">🚚 Supplier Payment</option>
+            <option value="Transport">🚗 Transport</option>
+            <option value="Staff">👤 Staff Wages</option>
+            <option value="Packaging">📦 Packaging</option>
+            <option value="Repairs">🔧 Repairs</option>
+            <option value="Other">📝 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount (KSh)</label>
+          <input id="expenseAmount" type="number" min="1" placeholder="e.g. 5000">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note (optional)</label>
+        <input id="expenseNote" type="text" placeholder="e.g. March rent, Equity Bank supplier…">
+      </div>
+      <div class="settings-actions">
+        <button class="save-btn" onclick="addExpense()">💸 Log Expense</button>
+      </div>
+    </div>
+
+    <!-- Expense Summary Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px" id="expenseSummaryCards">
+      <div class="stat-card"><div class="stat-label">Total Expenses</div><div class="stat-value" id="expTotalAmt">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value" id="expMonthAmt">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="expTodayAmt">KSh 0</div></div>
+      <div class="stat-card"><div class="stat-label">Entries</div><div class="stat-value" id="expCount">0</div></div>
+    </div>
+
+    <!-- Expense List -->
+    <div class="settings-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+        <div class="settings-title" style="border:none;padding:0;margin:0">📋 Expense History</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="expFilterRange" onchange="renderExpenses()" style="width:auto;padding:6px 10px;font-size:13px">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+      </div>
+      <div id="expenseList">
+        <div style="text-align:center;color:var(--muted);padding:30px;font-size:14px">No expenses logged yet</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -732,6 +851,7 @@ async function init() {
   await loadSettings();
   listenProducts();
   listenSales();
+  listenExpenses();
   showLoginScreen();
 }
 
@@ -823,6 +943,7 @@ function attemptLogin() {
 
   if (loginPin === pinMap[loginRole]) {
     currentUser = { role: loginRole, name: nameMap[loginRole] };
+    shiftStartTime = new Date();
     document.getElementById('loginOverlay').classList.add('hidden');
 
     // Show user badge & logout
@@ -844,11 +965,21 @@ function attemptLogin() {
 }
 
 function logout() {
-  if (!confirm('Log out of this session?')) return;
+  if (isOwner()) {
+    if (!confirm('Log out of this session?')) return;
+    doLogout();
+  } else {
+    // Show shift summary for cashiers
+    showShiftSummary();
+  }
+}
+
+function doLogout() {
   cart = [];
   discount = 0;
   document.getElementById('discountInput').value = 0;
   renderCart();
+  shiftStartTime = null;
   showLoginScreen();
 }
 
@@ -858,6 +989,7 @@ function isOwner() { return currentUser && currentUser.role === 'owner'; }
 function applyTabVisibility() {
   const owner = isOwner();
   document.getElementById('tab-reports').classList.toggle('hidden-tab', !owner);
+  document.getElementById('tab-expenses').classList.toggle('hidden-tab', !owner);
   document.getElementById('tab-settings').classList.toggle('hidden-tab', !owner);
   // Show Add Product button in POS bar for cashiers; hide for owner (they use Settings)
   const posAddBtn = document.getElementById('posAddProductBtn');
@@ -1469,8 +1601,8 @@ async function manualMpesaConfirm() {
       shortCode: settings.mpesaShortcode || '174379',
       status: 'pending', receivedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    showToast('✓ payment sent — confirming…', 'success');
-  } catch(e) { showToast('error: ' + e.message, 'error'); }
+    showToast('✓ Simulated payment sent — confirming…', 'success');
+  } catch(e) { showToast('Simulation error: ' + e.message, 'error'); }
 }
 
 function stopMpesaListener() {
@@ -1699,6 +1831,45 @@ function renderReport(range) {
   document.getElementById('statAvg').textContent     = `KSh ${Math.round(profit).toLocaleString()}`;
   document.getElementById('statMpesa').textContent   = mpesa;
 
+  // Expenses for the same period
+  const expensesInRange = (allExpenses || []).filter(e => {
+    const t = e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt);
+    return t >= start;
+  });
+  const totalExpenses = expensesInRange.reduce((s, x) => s + (x.amount || 0), 0);
+  const netProfit     = profit - totalExpenses;
+  const netEl = document.getElementById('statNetProfit');
+  document.getElementById('statExpenses').textContent = `KSh ${totalExpenses.toLocaleString()}`;
+  if (netEl) {
+    netEl.textContent  = `KSh ${Math.round(netProfit).toLocaleString()}`;
+    netEl.style.color  = netProfit >= 0 ? 'var(--brand)' : '#ef4444';
+  }
+
+  // Cashier breakdown
+  const cashierMap = {};
+  filtered.forEach(s => {
+    const name = s.cashier || 'Unknown';
+    if (!cashierMap[name]) cashierMap[name] = { count:0, revenue:0, cash:0, mpesa:0 };
+    cashierMap[name].count++;
+    cashierMap[name].revenue += parseFloat(s.total || 0);
+    if (s.paymentMethod === 'mpesa') cashierMap[name].mpesa += parseFloat(s.total || 0);
+    else cashierMap[name].cash += parseFloat(s.total || 0);
+  });
+  const cbody = document.getElementById('cashierBreakdownBody');
+  if (cbody) {
+    const rows = Object.entries(cashierMap);
+    cbody.innerHTML = rows.length
+      ? rows.sort((a,b) => b[1].revenue - a[1].revenue).map(([name, d]) =>
+          `<tr>
+            <td style="font-weight:600">${name}</td>
+            <td>${d.count}</td>
+            <td style="font-weight:700;color:var(--brand)">KSh ${d.revenue.toLocaleString()}</td>
+            <td>KSh ${d.cash.toLocaleString()}</td>
+            <td>KSh ${d.mpesa.toLocaleString()}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px">No data</td></tr>';
+  }
+
   const tbody = document.getElementById('salesTableBody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">No sales in this period</td></tr>';
@@ -1761,7 +1932,7 @@ async function clearAllReports() {
 // ─────────────────────────────────────────────────────────────────
 function switchTab(tab) {
   // Cashiers may only access POS
-  if ((tab === 'settings' || tab === 'reports') && !isOwner()) {
+  if ((tab === 'settings' || tab === 'reports' || tab === 'expenses') && !isOwner()) {
     showToast('Owner access required', 'error');
     return;
   }
@@ -1770,6 +1941,7 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`page-${tab}`).classList.add('active');
+  if (tab === 'expenses') renderExpenses();
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1788,6 +1960,189 @@ function showToast(message, type = 'info') {
     toast.style.transition = 'opacity 0.3s';
     setTimeout(() => toast.remove(), 300);
   }, 2500);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SHIFT SUMMARY
+// ─────────────────────────────────────────────────────────────────
+let shiftStartTime = null;
+
+function showShiftSummary() {
+  if (!currentUser || !shiftStartTime) { doLogout(); return; }
+
+  const now        = new Date();
+  const shiftSales = allSales.filter(s => {
+    const t = s.createdAt instanceof Date ? s.createdAt : new Date(s.createdAt);
+    return t >= shiftStartTime && s.cashier === currentUser.name;
+  });
+
+  const totalSales  = shiftSales.reduce((s, x) => s + parseFloat(x.total || 0), 0);
+  const cashSales   = shiftSales.filter(s => s.paymentMethod === 'cash').reduce((s, x) => s + parseFloat(x.total || 0), 0);
+  const mpesaSales  = shiftSales.filter(s => s.paymentMethod === 'mpesa').reduce((s, x) => s + parseFloat(x.total || 0), 0);
+
+  // Build item frequency map
+  const itemFreq = {};
+  shiftSales.forEach(s => {
+    const items = (() => { try { return JSON.parse(s.items); } catch { return []; } })();
+    items.forEach(i => {
+      const key = i.name;
+      if (!itemFreq[key]) itemFreq[key] = { emoji: i.emoji || '📦', qty: 0 };
+      itemFreq[key].qty += i.qty;
+    });
+  });
+  const topItems = Object.entries(itemFreq)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 5);
+
+  // Format shift duration
+  const diffMs   = now - shiftStartTime;
+  const diffMins = Math.floor(diffMs / 60000);
+  const hrs      = Math.floor(diffMins / 60);
+  const mins     = diffMins % 60;
+  const duration = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+
+  const fmt = d => d.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+
+  document.getElementById('shiftUserIcon').textContent    = currentUser.role === 'owner' ? '👑' : '🧑‍💼';
+  document.getElementById('shiftUserName').textContent    = currentUser.name;
+  document.getElementById('shiftTimeRange').textContent   = `${fmt(shiftStartTime)} – ${fmt(now)} (${duration})`;
+  document.getElementById('shiftTotalSales').textContent  = `KSh ${totalSales.toLocaleString()}`;
+  document.getElementById('shiftTxCount').textContent     = shiftSales.length;
+  document.getElementById('shiftCashTotal').textContent   = `KSh ${cashSales.toLocaleString()}`;
+  document.getElementById('shiftMpesaTotal').textContent  = `KSh ${mpesaSales.toLocaleString()}`;
+
+  if (topItems.length) {
+    document.getElementById('shiftTopItems').innerHTML = topItems.map(([name, d]) =>
+      `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:16px">${d.emoji}</span>
+        <span style="flex:1;font-size:13px;color:var(--text)">${name}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--brand)">${d.qty} sold</span>
+      </div>`
+    ).join('');
+  } else {
+    document.getElementById('shiftTopItems').innerHTML = '<div style="color:var(--muted);font-size:13px">No sales this shift</div>';
+  }
+
+  document.getElementById('shiftModal').classList.remove('hidden');
+}
+
+function confirmLogout() {
+  document.getElementById('shiftModal').classList.add('hidden');
+  doLogout();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// EXPENSES
+// ─────────────────────────────────────────────────────────────────
+let allExpenses = [];
+
+const EXPENSE_CATEGORY_ICONS = {
+  Rent:'🏠', Electricity:'💡', Water:'💧', Supplier:'🚚',
+  Transport:'🚗', Staff:'👤', Packaging:'📦', Repairs:'🔧', Other:'📝'
+};
+
+function listenExpenses() {
+  db.collection('expenses').orderBy('createdAt', 'desc').limit(300).onSnapshot(snap => {
+    allExpenses = snap.docs.map(d => ({
+      id: d.id, ...d.data(),
+      createdAt: d.data().createdAt?.toDate() || new Date()
+    }));
+    renderExpenses();
+    renderExpenseSummaryCards();
+  }, err => console.error('Expenses listener error:', err));
+}
+
+async function addExpense() {
+  const category = document.getElementById('expenseCategory').value;
+  const amount   = parseFloat(document.getElementById('expenseAmount').value);
+  const note     = document.getElementById('expenseNote').value.trim();
+  if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
+  try {
+    await db.collection('expenses').add({
+      category, amount, note,
+      addedBy: currentUser ? currentUser.name : 'Owner',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('expenseAmount').value = '';
+    document.getElementById('expenseNote').value   = '';
+    showToast(`✓ KSh ${amount.toLocaleString()} logged under ${category}`, 'success');
+  } catch(e) { showToast('Failed to save: ' + e.message, 'error'); }
+}
+
+async function deleteExpense(id) {
+  if (!confirm('Delete this expense entry?')) return;
+  try {
+    await db.collection('expenses').doc(id).delete();
+    showToast('Expense deleted', 'info');
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+function renderExpenseSummaryCards() {
+  const now       = new Date();
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+
+  const total = allExpenses.reduce((s, x) => s + (x.amount || 0), 0);
+  const month = allExpenses.filter(e => e.createdAt >= monthStart).reduce((s,x) => s+(x.amount||0), 0);
+  const today = allExpenses.filter(e => e.createdAt >= todayStart).reduce((s,x) => s+(x.amount||0), 0);
+
+  document.getElementById('expTotalAmt').textContent = `KSh ${total.toLocaleString()}`;
+  document.getElementById('expMonthAmt').textContent = `KSh ${month.toLocaleString()}`;
+  document.getElementById('expTodayAmt').textContent = `KSh ${today.toLocaleString()}`;
+  document.getElementById('expCount').textContent    = allExpenses.length;
+
+  // Also update reports profit to deduct expenses for current range
+  if (typeof renderReport === 'function') renderReport(currentReportRange);
+}
+
+function renderExpenses() {
+  const range    = document.getElementById('expFilterRange')?.value || 'all';
+  const now      = new Date();
+  let   start    = null;
+  if (range === 'today')     { start = new Date(); start.setHours(0,0,0,0); }
+  else if (range === 'week') { start = new Date(); start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+  else if (range === 'month'){ start = new Date(); start.setDate(1); start.setHours(0,0,0,0); }
+
+  const filtered = start
+    ? allExpenses.filter(e => e.createdAt >= start)
+    : allExpenses;
+
+  const container = document.getElementById('expenseList');
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:14px">No expenses in this period</div>';
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  filtered.forEach(e => {
+    const dateKey = e.createdAt.toLocaleDateString('en-KE', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+    if (!grouped[dateKey]) grouped[dateKey] = [];
+    grouped[dateKey].push(e);
+  });
+
+  container.innerHTML = Object.entries(grouped).map(([date, entries]) => {
+    const dayTotal = entries.reduce((s, x) => s + (x.amount || 0), 0);
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">
+        <span>${date}</span>
+        <span style="color:var(--brand)">KSh ${dayTotal.toLocaleString()}</span>
+      </div>
+      ${entries.map(e => `
+        <div class="expense-row">
+          <span style="font-size:22px">${EXPENSE_CATEGORY_ICONS[e.category] || '📝'}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;color:var(--text)">${e.category}</div>
+            ${e.note ? `<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.note}</div>` : ''}
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">by ${e.addedBy || 'Owner'} · ${e.createdAt.toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-weight:800;font-size:15px;color:#ef4444">− KSh ${(e.amount||0).toLocaleString()}</div>
+          </div>
+          <button class="expense-del-btn" onclick="deleteExpense('${e.id}')">✕</button>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
 }
 
 init();
