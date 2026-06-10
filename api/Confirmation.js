@@ -1,18 +1,12 @@
-export default async function handler(req, res) {
-  // Safaricom pings this URL via GET to verify it's alive
-  if (req.method === 'GET') {
-    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
-  }
-  
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 if (!getApps().length) {
   initializeApp({
     credential: cert({
-      projectId:     process.env.FIREBASE_PROJECT_ID,
-      clientEmail:   process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey:    process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      projectId:   process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey:  process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
   });
 }
@@ -20,8 +14,13 @@ if (!getApps().length) {
 const db = getFirestore();
 
 export default async function handler(req, res) {
+  // Safaricom pings with GET to verify the URL is alive
+  if (req.method === "GET") {
+    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+  }
+
   try {
-    const body = req.body;
+    const body       = req.body || {};
     const reference  = body.TransID          || "";
     const amount     = parseFloat(body.TransAmount || "0");
     const phone      = body.MSISDN            || "";
@@ -47,11 +46,12 @@ export default async function handler(req, res) {
       receivedAt: FieldValue.serverTimestamp(),
     });
 
-    console.log(`Payment saved: ${reference} | KSh ${amount} | ${phone}`);
-    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    console.log(`✅ Payment saved: ${reference} | KSh ${amount} | ${phone}`);
+    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
 
   } catch (error) {
     console.error("Confirmation error:", error);
-    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    // Always return 0 so Safaricom doesn't retry infinitely
+    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
   }
 }
