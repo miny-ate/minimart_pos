@@ -415,9 +415,9 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
       </div>
       <button class="btn-secondary" onclick="cancelMpesaPayment()" style="width:100%">✕ Cancel Payment</button>
       <div style="margin-top:10px;padding:10px;border:1px dashed #3d3820;border-radius:8px;text-align:center">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔧 No Daraja yet? Simulate payment:</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
         <button onclick="manualMpesaConfirm()" style="width:100%;padding:10px;background:linear-gradient(135deg,#166534,#15803d);color:white;border-radius:8px;font-weight:700;font-size:14px;border:none;cursor:pointer">
-          ✅ Simulate M-Pesa Payment Received
+          M-Pesa Payment Received
         </button>
       </div>
     </div>
@@ -837,7 +837,7 @@ let mpesaListener      = null;
 let mpesaTimer         = null;
 let mpesaTimeoutHandle = null;
 let mpesaOrderTotal    = 0;
-const MPESA_TIMEOUT_SECS = 300;
+const MPESA_TIMEOUT_SECS = 60;
 
 // ─────────────────────────────────────────────────────────────────
 // INIT
@@ -1601,8 +1601,8 @@ async function manualMpesaConfirm() {
       shortCode: settings.mpesaShortcode || '174379',
       status: 'pending', receivedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    showToast('✓ Simulated payment sent — confirming…', 'success');
-  } catch(e) { showToast('Simulation error: ' + e.message, 'error'); }
+    showToast('✓ payment sent — confirming…', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 function stopMpesaListener() {
