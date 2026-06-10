@@ -1,1 +1,6 @@
-{}
+{
+  "rewrites": [
+    { "source": "/api/confirm",    "destination": "/api/confirm" },
+    { "source": "/api/validate",   "destination": "/api/validate" }
+  ]
+}
