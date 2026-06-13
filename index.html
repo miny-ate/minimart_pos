@@ -493,7 +493,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(124,58,237,0.12
   <div class="products-panel">
     <div class="scanner-bar">
       <span class="scanner-icon">↠</span>
-      <input type="text" id="barcodeInput" placeholder="Scanner ready — scan a barcode or type here..." onkeydown="handleBarcodeKey(event)" oninput="handleBarcodeInput(this.value)">
+      <input type="text" id="barcodeInput" placeholder="Scanner ready — scan a barcode or type here..." onkeydown="handleBarcodeKey(event)">
       <span class="scanner-val hidden" id="barcodeVal"></span>
     </div>
     <div class="products-header">
@@ -837,7 +837,7 @@ let mpesaListener      = null;
 let mpesaTimer         = null;
 let mpesaTimeoutHandle = null;
 let mpesaOrderTotal    = 0;
-const MPESA_TIMEOUT_SECS = 60;
+const MPESA_TIMEOUT_SECS = 300;
 
 // ─────────────────────────────────────────────────────────────────
 // INIT
@@ -1334,65 +1334,33 @@ async function confirmRestock() {
 
 // ─────────────────────────────────────────────────────────────────
 // BARCODE SCANNER
+// Single handler on the input field — no global keydown listener.
+// The browser natively types into the field; we only intercept Enter.
+// Works for both keyboard typing and USB barcode scanners.
 // ─────────────────────────────────────────────────────────────────
-let barcodeBuffer = '';
-let barcodeTimer  = null;
-let lastKeyTime   = 0;
-const SCANNER_SPEED_MS = 50;
+function handleBarcodeKey(e) {
+  const input = document.getElementById('barcodeInput');
+  const bv    = document.getElementById('barcodeVal');
 
-document.addEventListener('keydown', e => {
-  if (activeTab !== 'pos') return;
-  if (document.querySelector('.modal-overlay:not(.hidden)')) return;
-  if (document.getElementById('loginOverlay') && !document.getElementById('loginOverlay').classList.contains('hidden')) return;
-  const now = Date.now();
-  const timeSinceLast = now - lastKeyTime;
-  lastKeyTime = now;
-  const active = document.activeElement;
-  const inOtherInput = active && active.tagName === 'INPUT' && active.id !== 'barcodeInput';
-  if (inOtherInput && timeSinceLast >= SCANNER_SPEED_MS) return;
   if (e.key === 'Enter') {
-    if (barcodeBuffer.length >= 3) { e.preventDefault(); processBarcode(barcodeBuffer.trim()); }
-    barcodeBuffer = '';
-    document.getElementById('barcodeInput').value = '';
-    document.getElementById('barcodeVal').classList.add('hidden');
+    e.preventDefault();
+    const val = input.value.trim();
+    if (val) processBarcode(val);
+    input.value = '';
+    bv.classList.add('hidden');
     return;
   }
-  if (e.key.length === 1) {
-    if (timeSinceLast < SCANNER_SPEED_MS || barcodeBuffer.length > 0) {
-      barcodeBuffer += e.key;
-      document.getElementById('barcodeInput').value = barcodeBuffer;
-      document.getElementById('barcodeVal').textContent = barcodeBuffer;
-      document.getElementById('barcodeVal').classList.remove('hidden');
-    } else {
-      barcodeBuffer = e.key;
-    }
-    if (barcodeTimer) clearTimeout(barcodeTimer);
-    barcodeTimer = setTimeout(() => {
-      if (document.activeElement.id !== 'barcodeInput') {
-        barcodeBuffer = '';
-        document.getElementById('barcodeInput').value = '';
-        document.getElementById('barcodeVal').classList.add('hidden');
-      }
-    }, 300);
-  }
-});
 
-function handleBarcodeKey(e) {
-  if (e.key === 'Enter') {
-    const val = document.getElementById('barcodeInput').value.trim();
+  // Update the floating preview badge after the keystroke settles
+  requestAnimationFrame(() => {
+    const val = input.value;
     if (val) {
-      processBarcode(val);
-      barcodeBuffer = '';
-      document.getElementById('barcodeInput').value = '';
-      document.getElementById('barcodeVal').classList.add('hidden');
+      bv.textContent = val;
+      bv.classList.remove('hidden');
+    } else {
+      bv.classList.add('hidden');
     }
-  }
-}
-
-function handleBarcodeInput(val) {
-  barcodeBuffer = val;
-  const bv = document.getElementById('barcodeVal');
-  val ? (bv.textContent = val, bv.classList.remove('hidden')) : bv.classList.add('hidden');
+  });
 }
 
 function processBarcode(barcode) {
